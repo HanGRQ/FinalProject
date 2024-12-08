@@ -1,55 +1,95 @@
 package com.example.finalproject.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.viewmodel.UserInfoViewModel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserGenderScreen(onNext: () -> Unit, viewModel: UserInfoViewModel) {
+fun UserGenderScreen(
+    viewModel: UserInfoViewModel,
+    onNext: () -> Unit
+) {
+    var selectedGender by remember { mutableStateOf("") }
+
     Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "选择您的性别", fontSize = 24.sp)
+        Text(
+            text = "选择性别",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Box(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            ElevatedButton(
+                onClick = {
+                    selectedGender = "男"
+                    viewModel.updateUserGender("男")
+                },
                 modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.LightGray)
-                    .clickable {
-                        viewModel.userGender = "男"
-                        onNext()
-                    },
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .padding(8.dp),
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = if (selectedGender == "男") MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surface
+                )
             ) {
-                Text(text = "男士", fontSize = 20.sp)
+                Text(
+                    "男",
+                    color = if (selectedGender == "男") MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurface
+                )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Box(
+            ElevatedButton(
+                onClick = {
+                    selectedGender = "女"
+                    viewModel.updateUserGender("女")
+                },
                 modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.LightGray)
-                    .clickable {
-                        viewModel.userGender = "女"
-                        onNext()
-                    },
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .padding(8.dp),
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = if (selectedGender == "女") MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surface
+                )
             ) {
-                Text(text = "女士", fontSize = 20.sp)
+                Text(
+                    "女",
+                    color = if (selectedGender == "女") MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurface
+                )
             }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onNext,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            enabled = selectedGender.isNotEmpty()
+        ) {
+            Text("下一步")
         }
     }
 }

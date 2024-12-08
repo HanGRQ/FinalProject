@@ -152,6 +152,7 @@ fun CameraPreview(
     )
 }
 
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 private fun processImageProxy(
     imageProxy: ImageProxy,
     onBarcodeScanned: (String) -> Unit

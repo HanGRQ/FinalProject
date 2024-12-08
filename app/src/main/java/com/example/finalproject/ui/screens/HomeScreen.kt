@@ -45,8 +45,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Header section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -78,7 +76,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onNavigateToFoodDetails() }
-                    .padding(vertical = 8.dp)  // 增加点击区域
+                    .padding(vertical = 8.dp)
             ) {
                 Text(text = "饮食数据", fontSize = 18.sp)
                 Spacer(modifier = Modifier.weight(1f))
@@ -97,7 +95,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onNavigateToMoodDetails() }
-                    .padding(vertical = 8.dp)  // 增加点击区域
+                    .padding(vertical = 8.dp)
             ) {
                 Text(text = "今日情绪", fontSize = 18.sp)
                 Spacer(modifier = Modifier.weight(1f))

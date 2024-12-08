@@ -11,7 +11,6 @@ import com.example.finalproject.viewmodel.UserInfoViewModel
 @Composable
 fun AppNavGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "splash") {
-
         // 启动页面
         composable("splash") {
             SplashScreen(onFinish = {
@@ -48,29 +47,20 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // 计划设置流程
+        // AppNavGraph.kt 中的相关部分
         composable("setup_plan_flow") {
-            val viewModel: UserInfoViewModel = viewModel() // 使用 Compose 的 viewModel() 函数
+            val viewModel: UserInfoViewModel = viewModel()
             SetupPlanFlow(
                 viewModel = viewModel,
                 onFinish = {
-                    navController.navigate("main") {
-                        popUpTo("setup_plan_flow") { inclusive = true }
+                    navController.navigate("home") {
+                        popUpTo(0) { inclusive = true }  // 清除整个导航栈
+                        launchSingleTop = true  // 确保只有一个实例
                     }
                 }
             )
         }
 
-        // 主页面
-        composable("main") {
-            MainScreen(onNavigateToHome = {
-                navController.navigate("home") {
-                    popUpTo("main") { inclusive = true }
-                }
-            })
-        }
-
-        // Bottom navigation screens
         composable("home") {
             HomeScreen(
                 onNavigateToFoodDetails = { navController.navigate("food_details") },
@@ -81,11 +71,11 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // 其他底部导航页面
         composable("weight") {
             WeightScreen(
                 onNavigateTo = { route ->
                     navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
                 }
@@ -96,7 +86,6 @@ fun AppNavGraph(navController: NavHostController) {
             DataScreen(
                 onNavigateTo = { route ->
                     navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
                 }
@@ -107,22 +96,29 @@ fun AppNavGraph(navController: NavHostController) {
             PersonalScreen(
                 onNavigateTo = { route ->
                     navController.navigate(route) {
-                        popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        composable("scan") {
-            ScanScreen(
-                onNavigateBack = {
-                    navController.popBackStack("food_details", inclusive = false) // 返回 food_details
-                }
+        composable("food_details") {
+            FoodDetailsScreen(
+                onScanButtonClick = { navController.navigate("scan") },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
+        composable("mood_details") {
+            MoodDetailsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
-
+        composable("scan") {
+            ScanScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
