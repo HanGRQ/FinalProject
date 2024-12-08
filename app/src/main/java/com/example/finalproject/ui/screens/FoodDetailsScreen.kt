@@ -24,13 +24,16 @@ import com.example.finalproject.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodDetailsScreen(navController: NavController) {
+fun FoodDetailsScreen(
+    onScanButtonClick: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(text = "饮食详情", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { onNavigateBack() }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_back),
                             contentDescription = "Back"
@@ -126,7 +129,7 @@ fun FoodDetailsScreen(navController: NavController) {
 
                 // Barcode Scan Button
                 Button(
-                    onClick = { navController.navigate("scan") },
+                    onClick = { onScanButtonClick() },
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D40)),
                     modifier = Modifier
@@ -146,6 +149,7 @@ fun FoodDetailsScreen(navController: NavController) {
         }
     )
 }
+
 
 @Composable
 fun NutritionalInfo(label: String, value: String, percentage: String) {

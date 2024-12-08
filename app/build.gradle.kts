@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.finalproject"
-        minSdk = 34
+        minSdk = 31
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -63,14 +63,17 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core:<latest_version>")
     implementation ("androidx.compose.material:material-icons-extended:<latest_version>")
     implementation("androidx.compose.material:material:1.0.0")
+    implementation ("androidx.compose:compose-bom:2023.08.00")
     implementation("androidx.compose.ui:ui:1.0.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-alpha04")
     implementation("androidx.camera:camera-core:1.3.0")
+    implementation("androidx.camera:camera-camera2:1.3.0")
     implementation("androidx.camera:camera-view:1.3.0")
     implementation("androidx.camera:camera-lifecycle:1.3.0")
-    implementation("com.google.mlkit:barcode-scanning:17.0.2")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("com.google.mlkit:face-detection:16.1.5")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.lifecycle)

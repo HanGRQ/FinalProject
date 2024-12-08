@@ -72,33 +72,56 @@ fun AppNavGraph(navController: NavHostController) {
 
         // Bottom navigation screens
         composable("home") {
-            HomeScreen(navController = navController)
+            HomeScreen(
+                onNavigateToFoodDetails = { navController.navigate("food_details") },
+                onNavigateToMoodDetails = { navController.navigate("mood_details") },
+                onNavigateToWeight = { navController.navigate("weight") },
+                onNavigateToData = { navController.navigate("data") },
+                onNavigateToPersonal = { navController.navigate("personal") }
+            )
         }
-
-        composable("food_details") {
-            FoodDetailsScreen(navController = navController)
-        }
-
-        composable("mood_details") {
-            MoodDetailsScreen(navController = navController)
-        }
-
 
         composable("weight") {
-            WeightScreen(navController = navController)
+            WeightScreen(
+                onNavigateTo = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable("data") {
-            DataScreen(navController = navController)
+            DataScreen(
+                onNavigateTo = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable("personal") {
-            PersonalScreen(navController = navController)
+            PersonalScreen(
+                onNavigateTo = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable("scan") {
-            ScanScreen(navController = navController)
+            ScanScreen(
+                onNavigateBack = {
+                    navController.popBackStack("food_details", inclusive = false) // 返回 food_details
+                }
+            )
         }
+
 
 
     }

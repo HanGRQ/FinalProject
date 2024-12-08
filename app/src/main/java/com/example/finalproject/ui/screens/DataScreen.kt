@@ -1,20 +1,38 @@
 package com.example.finalproject.ui.screens
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.finalproject.ui.components.BottomNavigationBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DataScreen(navController: NavHostController) {
+fun DataScreen(
+    onNavigateTo: (String) -> Unit
+) {
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
+        topBar = {
+            TopAppBar(
+                title = { Text("数据分析") }
+            )
+        },
+        bottomBar = {
+            BottomNavigationBar(
+                currentRoute = "data",
+                onNavigate = onNavigateTo
+            )
+        }
     ) { innerPadding ->
-        Text(
-            text = "This is the data page! View your diet and health data here.",
-            modifier = Modifier.padding(innerPadding)
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Text("数据分析页面内容")
+        }
     }
 }

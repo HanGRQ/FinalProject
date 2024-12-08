@@ -1,169 +1,183 @@
 package com.example.finalproject.ui.screens
 
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Size
-import android.widget.Toast
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import androidx.navigation.NavController
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.example.finalproject.R
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("RestrictedApi")
 @Composable
-fun ScanScreen(navController: NavController) {
+fun ScanScreen(
+    onNavigateBack: () -> Unit
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    var hasCameraPermission by remember { mutableStateOf(false) }
 
-    // 检查并请求权限
-    checkCameraPermission(context)
+    // 检查相机权限
+    LaunchedEffect(Unit) {
+        hasCameraPermission = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "扫一扫", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        text = "扫一扫",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_back),
+                            contentDescription = "返回"
+                        )
                     }
                 }
             )
-        },
-        content = { padding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (hasCameraPermission) {
                 CameraPreview(
-                    context = context,
-                    lifecycleOwner = lifecycleOwner,
-                    cameraExecutor = cameraExecutor,
                     onBarcodeScanned = { barcode ->
-                        Toast.makeText(context, "扫描结果：$barcode", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack() // 返回上一页面
+                        println("扫描到条码: $barcode")
+                        onNavigateBack()
                     }
                 )
+            } else {
+                // 显示无相机权限提示
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "需要相机权限以进行扫描",
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            // 请求相机权限
+                            // 注意：实际应用中需要实现权限请求逻辑
+                        }
+                    ) {
+                        Text("授予权限")
+                    }
+                }
             }
         }
-    )
-}
-
-fun checkCameraPermission(context: Context) {
-    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
-        != PackageManager.PERMISSION_GRANTED) {
-        ActivityCompat.requestPermissions(
-            context as Activity, // 强转为 Activity
-            arrayOf(android.Manifest.permission.CAMERA),
-            100
-        )
     }
 }
 
 @Composable
 fun CameraPreview(
-    context: Context,
-    lifecycleOwner: LifecycleOwner,
-    cameraExecutor: ExecutorService,
     onBarcodeScanned: (String) -> Unit
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     AndroidView(
         modifier = Modifier.fillMaxSize(),
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+        factory = { context ->
+            PreviewView(context).apply {
+                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            }
+        },
+        update = { previewView ->
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
 
                 val preview = Preview.Builder()
-                    .setTargetResolution(Size(640, 480))
                     .build()
-                    .also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                    .also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
 
                 val imageAnalysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                     .also { analysis ->
-                        analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                        analysis.setAnalyzer(
+                            ContextCompat.getMainExecutor(context)
+                        ) { imageProxy ->
                             processImageProxy(imageProxy, onBarcodeScanned)
                         }
                     }
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
                 try {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
-                        cameraSelector,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
                         imageAnalysis
                     )
-                } catch (exc: Exception) {
-                    exc.printStackTrace()
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            }, ContextCompat.getMainExecutor(ctx))
-
-            previewView
+            }, ContextCompat.getMainExecutor(context))
         }
     )
 }
 
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
 private fun processImageProxy(
     imageProxy: ImageProxy,
     onBarcodeScanned: (String) -> Unit
 ) {
     val mediaImage = imageProxy.image
     if (mediaImage != null) {
-        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+        val inputImage = InputImage.fromMediaImage(
+            mediaImage,
+            imageProxy.imageInfo.rotationDegrees
+        )
+
         val scanner = BarcodeScanning.getClient()
 
-        scanner.process(image)
+        scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
-                for (barcode in barcodes) {
-                    barcode.rawValue?.let { onBarcodeScanned(it) }
+                barcodes.firstOrNull()?.rawValue?.let {
+                    onBarcodeScanned(it)
                 }
             }
-            .addOnFailureListener {
-                it.printStackTrace()
+            .addOnFailureListener { e ->
+                println("扫描失败: ${e.message}")
             }
             .addOnCompleteListener {
                 imageProxy.close()
             }
+    } else {
+        imageProxy.close()
     }
 }
