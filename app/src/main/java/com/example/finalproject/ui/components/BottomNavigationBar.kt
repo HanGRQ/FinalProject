@@ -1,50 +1,64 @@
 package com.example.finalproject.ui.components
 
-import androidx.compose.material.BottomNavigation
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.FitnessCenter
+import com.example.finalproject.ui.navigation.BottomNavScreen
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
-        BottomNavItem("home", "主页", Icons.Filled.Home),
-        BottomNavItem("weight", "体重", Icons.Filled.FitnessCenter),
-        BottomNavItem("data", "数据", Icons.Filled.Assessment),
-        BottomNavItem("personal", "个人", Icons.Filled.Person)
+        BottomNavScreen.Home,
+        BottomNavScreen.Weight,
+        BottomNavScreen.Data,
+        BottomNavScreen.Personal
     )
 
-    BottomNavigation(backgroundColor = Color.White) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp) // 为左右和底部边距增加 padding
+            .clip(RoundedCornerShape(24.dp)) // 为整个导航栏添加弧度
+            .background(Color(0xFF004D40)), // 背景颜色
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp), // 调整内部内容的上下间距
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
 
-        items.forEach { item ->
-            BottomNavigationItem(
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                selected = currentRoute == item.route,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                selectedContentColor = Color(0xFF004D40),
-                unselectedContentColor = Color.Gray
-            )
+            items.forEach { screen ->
+                BottomNavigationItem(
+                    icon = { Icon(screen.icon, contentDescription = screen.title) },
+                    label = { Text(screen.title) },
+                    selected = currentRoute == screen.route,
+                    onClick = {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    selectedContentColor = Color.White,
+                    unselectedContentColor = Color(0xFF80CBC4)
+                )
+            }
         }
     }
 }
-
-data class BottomNavItem(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)

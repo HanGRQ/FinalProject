@@ -13,7 +13,7 @@ fun PersonalScreen(navController: NavHostController) {
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         Text(
-            text = "这是个人页面！查看并编辑您的个人资料。",
+            text = "This is a personal page! View and edit your profile.",
             modifier = Modifier.padding(innerPadding)
         )
     }

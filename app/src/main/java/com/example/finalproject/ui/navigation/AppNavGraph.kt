@@ -71,9 +71,35 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         // Bottom navigation screens
-        composable("home") { HomeScreen(navController = navController) }
-        composable("weight") { WeightScreen(navController = navController) }
-        composable("data") { DataScreen(navController = navController) }
-        composable("personal") { PersonalScreen(navController = navController) }
+        composable("home") {
+            HomeScreen(navController = navController)
+        }
+
+        composable("food_details") {
+            FoodDetailsScreen(navController = navController)
+        }
+
+        composable("mood_details") {
+            MoodDetailsScreen(navController = navController)
+        }
+
+
+        composable("weight") {
+            WeightScreen(navController = navController)
+        }
+
+        composable("data") {
+            DataScreen(navController = navController)
+        }
+
+        composable("personal") {
+            PersonalScreen(navController = navController)
+        }
+
+        composable("scan") {
+            ScanScreen(navController = navController)
+        }
+
+
     }
 }

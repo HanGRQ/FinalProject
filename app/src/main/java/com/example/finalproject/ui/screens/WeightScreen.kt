@@ -13,7 +13,7 @@ fun WeightScreen(navController: NavHostController) {
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         Text(
-            text = "这是体重管理页面！",
+            text = "This is Weight Management Page.",
             modifier = Modifier.padding(innerPadding)
         )
     }

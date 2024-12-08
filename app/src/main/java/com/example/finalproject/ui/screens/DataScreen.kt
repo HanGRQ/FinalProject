@@ -13,7 +13,7 @@ fun DataScreen(navController: NavHostController) {
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         Text(
-            text = "这是数据页面！在这里查看您的饮食和健康数据。",
+            text = "This is the data page! View your diet and health data here.",
             modifier = Modifier.padding(innerPadding)
         )
     }
