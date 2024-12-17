@@ -1,0 +1,28 @@
+CREATE TABLE products (
+    barcode TEXT PRIMARY KEY,
+    name TEXT,
+    spec TEXT,
+    unit TEXT,
+    price REAL,
+    brand TEXT,
+    supplier TEXT,
+    madeIn TEXT,
+    createdAt TEXT,
+    updatedAt TEXT,
+    deletedAt TEXT
+);
+
+INSERT INTO products (
+    barcode, name, spec, unit, price, brand, supplier, madeIn, createdAt, updatedAt
+) VALUES (
+    '6903252710175',
+    '康师傅经典香辣牛肉袋面',
+    '118g/袋',
+    '包',
+	2.5,
+    '康师傅',
+    '天津顶益食品有限公司',
+    '天津',
+    '2024-11-01 13:46:42',
+    '2024-12-01 13:46:42'
+);
