@@ -24,14 +24,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
     companion object {
         private const val TAG = "DatabaseHelper"
-        private const val DATABASE_NAME = "test.db"
+        private const val DATABASE_NAME = "food.db"
         private const val DATABASE_VERSION = 1
-        private const val TABLE_NAME = "products"  // 表名
+        private const val TABLE_NAME = "products"
     }
 
     fun isDatabaseValid(): Boolean {
         return try {
-            readableDatabase.version  // 尝试读取数据库版本
+            readableDatabase.version // 尝试读取数据库版本
             Log.d(TAG, "数据库验证成功")
             true
         } catch (e: Exception) {
@@ -41,58 +41,60 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     }
 
 
-    init {
-        Log.d(TAG, "初始化 DatabaseHelper")
-        copyDatabaseIfNeeded()
-    }
-
-    /**
-     * 检查并复制数据库文件到应用内部目录
-     */
-    private fun copyDatabaseIfNeeded() {
-        val dbFile = context.getDatabasePath(DATABASE_NAME)
-        if (dbFile.exists()) {
-            Log.d(TAG, "数据库文件已存在")
-            return
-        }
-        try {
-            dbFile.parentFile?.mkdirs()
-            context.assets.open(DATABASE_NAME).use { input ->
-                dbFile.outputStream().use { output ->
-                    input.copyTo(output)
-                    Log.d(TAG, "数据库文件复制完成")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "复制数据库失败", e)
-            throw RuntimeException("无法复制数据库", e)
-        }
-    }
-
     override fun onCreate(db: SQLiteDatabase) {
-        Log.d(TAG, "onCreate: 不执行创建表，因为使用预制数据库")
+        Log.d(TAG, "onCreate: 开始创建表")
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS $TABLE_NAME (
+                barcode TEXT PRIMARY KEY,
+                name TEXT,
+                spec TEXT,
+                unit TEXT,
+                price REAL,
+                brand TEXT,
+                supplier TEXT,
+                madeIn TEXT,
+                createdAt TEXT,
+                updatedAt TEXT,
+                deletedAt TEXT
+            )
+        """.trimIndent())
+        Log.d(TAG, "表创建完成")
+
+        // 初始化数据
+        seedInitialData(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        Log.d(TAG, "onUpgrade: $oldVersion -> $newVersion")
+        Log.d(TAG, "onUpgrade: $oldVersion -> $newVersion，删除旧表并重新创建")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
+        onCreate(db)
     }
 
-    /**
-     * 根据条形码查询商品详情
-     */
+    private fun seedInitialData(db: SQLiteDatabase) {
+        Log.d(TAG, "初始化数据")
+        db.execSQL("""
+            INSERT INTO $TABLE_NAME (barcode, name, spec, unit, price, brand, supplier, madeIn, createdAt, updatedAt)
+            VALUES (
+                '6903252710175', 
+                '康师傅经典香辣牛肉袋面', 
+                '118g袋', 
+                '包', 
+                2.5, 
+                '康师傅', 
+                '天津顶益食品有限公司', 
+                '天津', 
+                '2024-11-01 13:46:42', 
+                '2024-12-01 13:46:42'
+            )
+        """.trimIndent())
+        Log.d(TAG, "初始数据插入完成")
+    }
+
     fun getFoodDetailsByBarcode(barcode: String): FoodDetails? {
         Log.d(TAG, "开始查询条形码: $barcode")
-        try {
+        return try {
             val db = readableDatabase
-
-            // 检查表结构
-            val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME LIMIT 1", null)
-            val columnNames = cursor.columnNames
-            Log.d(TAG, "表结构: ${columnNames.joinToString()}")
-            cursor.close()
-
-            // 查询数据
-            val productCursor = db.query(
+            val cursor = db.query(
                 TABLE_NAME,
                 null,
                 "barcode = ?",
@@ -101,22 +103,21 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 null,
                 null
             )
-
-            return productCursor.use { cursor ->
-                if (cursor.moveToFirst()) {
+            cursor.use {
+                if (it.moveToFirst()) {
                     Log.d(TAG, "找到匹配记录")
                     FoodDetails(
-                        barcode = cursor.getString(cursor.getColumnIndexOrThrow("barcode")),
-                        name = cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                        spec = cursor.getString(cursor.getColumnIndexOrThrow("spec")),
-                        unit = cursor.getString(cursor.getColumnIndexOrThrow("unit")),
-                        price = cursor.getDouble(cursor.getColumnIndexOrThrow("price")),
-                        brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
-                        supplier = cursor.getString(cursor.getColumnIndexOrThrow("supplier")),
-                        madeIn = cursor.getString(cursor.getColumnIndexOrThrow("madeIn")),
-                        createdAt = parseDateTime(cursor.getString(cursor.getColumnIndexOrThrow("createdAt"))),
-                        updatedAt = parseDateTime(cursor.getString(cursor.getColumnIndexOrThrow("updatedAt"))),
-                        deletedAt = parseDateTime(cursor.getString(cursor.getColumnIndexOrThrow("deletedAt")))
+                        barcode = it.getString(it.getColumnIndexOrThrow("barcode")),
+                        name = it.getString(it.getColumnIndexOrThrow("name")),
+                        spec = it.getString(it.getColumnIndexOrThrow("spec")),
+                        unit = it.getString(it.getColumnIndexOrThrow("unit")),
+                        price = it.getDouble(it.getColumnIndexOrThrow("price")),
+                        brand = it.getString(it.getColumnIndexOrThrow("brand")),
+                        supplier = it.getString(it.getColumnIndexOrThrow("supplier")),
+                        madeIn = it.getString(it.getColumnIndexOrThrow("madeIn")),
+                        createdAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("createdAt"))),
+                        updatedAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("updatedAt"))),
+                        deletedAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("deletedAt")))
                     )
                 } else {
                     Log.d(TAG, "未找到匹配记录")
@@ -125,32 +126,16 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
         } catch (e: Exception) {
             Log.e(TAG, "查询失败", e)
-            return null
-        }
-    }
-
-    /**
-     * 解析日期时间字符串
-     */
-    private fun parseDateTime(dateStr: String?): LocalDateTime? {
-        if (dateStr == null) return null
-        return try {
-            LocalDateTime.parse(dateStr.replace(" ", "T"))
-        } catch (e: Exception) {
-            Log.e(TAG, "解析日期失败: $dateStr", e)
             null
         }
     }
 
-    /**
-     * 关闭数据库连接
-     */
-    override fun close() {
-        try {
-            super.close()
-            Log.d(TAG, "数据库连接已关闭")
+    private fun parseDateTime(dateStr: String?): LocalDateTime? {
+        return try {
+            dateStr?.let { LocalDateTime.parse(it.replace(" ", "T")) }
         } catch (e: Exception) {
-            Log.e(TAG, "关闭数据库失败", e)
+            Log.e(TAG, "解析日期失败: $dateStr", e)
+            null
         }
     }
 }
