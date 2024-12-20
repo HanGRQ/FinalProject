@@ -1,13 +1,22 @@
 package com.example.finalproject.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.finalproject.R
 import com.example.finalproject.viewmodel.UserInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,61 +30,120 @@ fun UserGoalScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp)
     ) {
-        Text(
-            text = "选择你的目标",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 目标选项
-        Column(
+        // Top navigation section
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            GoalButton(
-                text = "增重",
-                isSelected = selectedGoal == "增重",
-                onClick = {
-                    selectedGoal = "增重"
-                    viewModel.updateUserGoal("增重")
-                }
-            )
-
-            GoalButton(
-                text = "减重",
-                isSelected = selectedGoal == "减重",
-                onClick = {
-                    selectedGoal = "减重"
-                    viewModel.updateUserGoal("减重")
-                }
-            )
-
-            GoalButton(
-                text = "保持体重",
-                isSelected = selectedGoal == "保持体重",
-                onClick = {
-                    selectedGoal = "保持体重"
-                    viewModel.updateUserGoal("保持体重")
-                }
-            )
+            IconButton(onClick = { /* Handle back */ }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    contentDescription = "Back"
+                )
+            }
+            Text("Skip", color = Color.Gray)
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onNext,
+        // Progress indicator
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            enabled = selectedGoal.isNotEmpty()
+                .padding(top = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("下一步")
+            Text("2 / 6", color = Color.Gray)
+        }
+
+        // Main content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text(
+                text = buildAnnotatedString {
+                    append("Choose Your ")
+                    withStyle(SpanStyle(color = Color(0xFF00BFA5))) {
+                        append("Goal")
+                    }
+                },
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = "We will use this data\nto provide a better diet plan for you",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Goal options
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                GoalButton(
+                    text = "Gain Weight",
+                    icon = R.drawable.ic_banana,
+                    isSelected = selectedGoal == "增重",
+                    onClick = {
+                        selectedGoal = "增重"
+                        viewModel.updateUserGoal("增重")
+                    }
+                )
+
+                GoalButton(
+                    text = "Lose Weight",
+                    icon = R.drawable.ic_dumbbell,
+                    isSelected = selectedGoal == "减重",
+                    onClick = {
+                        selectedGoal = "减重"
+                        viewModel.updateUserGoal("减重")
+                    }
+                )
+
+                GoalButton(
+                    text = "Stay Healthy",
+                    icon = R.drawable.ic_trophy,
+                    isSelected = selectedGoal == "保持体重",
+                    onClick = {
+                        selectedGoal = "保持体重"
+                        viewModel.updateUserGoal("保持体重")
+                    }
+                )
+            }
+        }
+
+        // Bottom next button
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = onNext,
+                modifier = Modifier.size(64.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1B3434)
+                ),
+                enabled = selectedGoal.isNotEmpty()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_forward),
+                    contentDescription = "Next",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
@@ -83,23 +151,33 @@ fun UserGoalScreen(
 @Composable
 private fun GoalButton(
     text: String,
+    icon: Int,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    ElevatedButton(
+    Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
-        colors = ButtonDefaults.elevatedButtonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color(0xFFE8F5E9) else Color(0xFFF5F5F5),
+            contentColor = Color.Black
+        ),
+        elevation = null
     ) {
-        Text(
-            text = text,
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = text)
+            Image(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }

@@ -1,83 +1,234 @@
 package com.example.finalproject.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.finalproject.R
 import com.example.finalproject.viewmodel.UserInfoViewModel
+import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserWeightScreen(
     viewModel: UserInfoViewModel,
     onNext: () -> Unit
 ) {
-    var weightInput by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
+    var currentWeight by remember { mutableStateOf(60f) }
+    var unit by remember { mutableStateOf("kg") }
 
+    WeightScreenBase(
+        title = "Weight",
+        progress = "5 / 6",
+        currentValue = currentWeight,
+        onValueChange = { currentWeight = it },
+        unit = unit,
+        onUnitChange = { unit = it },
+        valueRange = 20f..200f,
+        onNext = {
+            viewModel.updateUserWeight(currentWeight)
+            onNext()
+        }
+    )
+}
+
+@Composable
+private fun WeightScreenBase(
+    title: String,
+    progress: String,
+    currentValue: Float,
+    onValueChange: (Float) -> Unit,
+    unit: String,
+    onUnitChange: (String) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    onNext: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp)
     ) {
-        Text(
-            text = "输入你的体重",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Top navigation
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = { /* Handle back */ }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    contentDescription = "Back"
+                )
+            }
+            Text("Skip", color = Color.Gray)
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "请输入当前体重（公斤）",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = weightInput,
-            onValueChange = { input ->
-                // 只允许输入数字和小数点，最多两位小数
-                if (input.isEmpty() || input.matches(Regex("^\\d{0,3}(\\.\\d{0,2})?$"))) {
-                    weightInput = input
-                    showError = false
-                }
-            },
-            label = { Text("体重") },
-            suffix = { Text("kg") },
-            singleLine = true,
-            isError = showError,
-            supportingText = if (showError) {
-                { Text("请输入有效的体重（20-200公斤）") }
-            } else null
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                val weight = weightInput.toFloatOrNull()
-                if (weight != null && weight in 20f..200f) {
-                    viewModel.updateUserWeight(weight)
-                    onNext()
-                } else {
-                    showError = true
-                }
-            },
+        // Progress indicator
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            enabled = weightInput.isNotEmpty()
+                .padding(top = 24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("下一步")
+            Text(progress, color = Color.Gray)
         }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text(
+                text = buildAnnotatedString {
+                    append("Choose Your ")
+                    withStyle(SpanStyle(color = Color(0xFF00BFA5))) {
+                        append(title)
+                    }
+                },
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = "We will use this data\nto provide a better diet plan for you",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Unit selector
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xFF1B3434))
+                    .padding(4.dp)
+            ) {
+                listOf("kg", "lb").forEach { unitOption ->
+                    Button(
+                        onClick = { onUnitChange(unitOption) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (unit == unitOption) Color(0xFF1B3434) else Color.Transparent,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(unitOption)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Weight display
+            WeightDisplay(
+                weight = currentValue,
+                isHighlighted = true
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Ruler
+            RulerSelector(
+                value = currentValue,
+                onValueChange = onValueChange,
+                range = valueRange
+            )
+        }
+
+        // Bottom next button
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = onNext,
+                modifier = Modifier.size(64.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1B3434)
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_forward),
+                    contentDescription = "Next",
+                    tint = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WeightDisplay(
+    weight: Float,
+    isHighlighted: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .background(
+                if (isHighlighted) Color(0xFFE8F5E9) else Color(0xFFF5F5F5),
+                RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 32.dp, vertical = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = weight.roundToInt().toString(),
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun RulerSelector(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>
+) {
+    var isDragging by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { isDragging = true },
+                    onDragEnd = { isDragging = false },
+                    onDragCancel = { isDragging = false },
+                    onHorizontalDrag = { change, dragAmount ->
+                        val newValue = value + (dragAmount / 10f)
+                        when {
+                            newValue < range.start -> onValueChange(range.start)
+                            newValue > range.endInclusive -> onValueChange(range.endInclusive)
+                            else -> onValueChange(newValue)
+                        }
+                    }
+                )
+            }
+    ) {
+        // Ruler marks implementation
     }
 }

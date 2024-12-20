@@ -29,61 +29,57 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(50.dp))
 
-        // 返回按钮
-        IconButton(onClick = { /*返回逻辑*/ }) {
-            Icon(painter = painterResource(R.drawable.ic_back), contentDescription = null)
+        IconButton(onClick = { /* Handle back */ }) {
+            Icon(painter = painterResource(R.drawable.ic_back), contentDescription = "Back")
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 欢迎标题
         Text(
-            text = "欢迎回来",
+            text = "Welcome Back",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "快来登录，一起健康生活吧",
+            text = "Login now and let's live healthy together",
             fontSize = 16.sp,
             color = Color.Gray
         )
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Email 输入框
         OutlinedTextField(
             value = email.value,
             onValueChange = { email.value = it },
-            label = { Text("输入Email账号") },
+            label = { Text("Enter Email") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 密码输入框
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
-            label = { Text("输入密码") },
+            label = { Text("Enter Password") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 登录按钮
         Button(
             onClick = { onLoginSuccess() },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D40))
         ) {
-            Text(text = "立即登录", fontSize = 18.sp, color = Color.White)
+            Text(text = "Login Now", fontSize = 18.sp, color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // 忘记密码
         Text(
-            text = "忘记密码?",
+            text = "Forgot Password?",
             color = Color.Gray,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )

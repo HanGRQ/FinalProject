@@ -14,25 +14,25 @@ sealed class BottomNavScreen(
 ) {
     object Home : BottomNavScreen(
         route = "home",
-        title = "首页",
+        title = "Home",
         icon = Icons.Default.Home
     )
 
     object Weight : BottomNavScreen(
         route = "weight",
-        title = "体重",
+        title = "Weight",
         icon = Icons.Default.MonitorWeight
     )
 
     object Data : BottomNavScreen(
         route = "data",
-        title = "数据",
+        title = "Data",
         icon = Icons.Default.Assessment
     )
 
     object Personal : BottomNavScreen(
         route = "personal",
-        title = "我的",
+        title = "Profile",
         icon = Icons.Default.Person
     )
 }

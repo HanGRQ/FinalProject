@@ -4,20 +4,16 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import java.time.LocalDateTime
 
 data class FoodDetails(
     val barcode: String,
     val name: String,
-    val spec: String,
-    val unit: String,
-    val price: Double,
-    val brand: String,
-    val supplier: String,
-    val madeIn: String,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?,
-    val deletedAt: LocalDateTime?
+    val totalEnergyKJ: Double,
+    val totalEnergyKcal: Double,
+    val carbohydrates: Double,
+    val fat: Double,
+    val protein: Double,
+    val sodium: Double
 )
 
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -31,7 +27,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
     fun isDatabaseValid(): Boolean {
         return try {
-            readableDatabase.version // 尝试读取数据库版本
+            readableDatabase.version
             Log.d(TAG, "数据库验证成功")
             true
         } catch (e: Exception) {
@@ -40,27 +36,22 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         }
     }
 
-
     override fun onCreate(db: SQLiteDatabase) {
         Log.d(TAG, "onCreate: 开始创建表")
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS $TABLE_NAME (
                 barcode TEXT PRIMARY KEY,
                 name TEXT,
-                spec TEXT,
-                unit TEXT,
-                price REAL,
-                brand TEXT,
-                supplier TEXT,
-                madeIn TEXT,
-                createdAt TEXT,
-                updatedAt TEXT,
-                deletedAt TEXT
+                totalEnergyKJ REAL,
+                totalEnergyKcal REAL,
+                carbohydrates REAL,
+                fat REAL,
+                protein REAL,
+                sodium REAL
             )
         """.trimIndent())
         Log.d(TAG, "表创建完成")
 
-        // 初始化数据
         seedInitialData(db)
     }
 
@@ -73,18 +64,25 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     private fun seedInitialData(db: SQLiteDatabase) {
         Log.d(TAG, "初始化数据")
         db.execSQL("""
-            INSERT INTO $TABLE_NAME (barcode, name, spec, unit, price, brand, supplier, madeIn, createdAt, updatedAt)
+            INSERT INTO $TABLE_NAME (
+                barcode, 
+                name, 
+                totalEnergyKJ,
+                totalEnergyKcal,
+                carbohydrates,
+                fat,
+                protein,
+                sodium
+            )
             VALUES (
-                '6903252710175', 
-                '康师傅经典香辣牛肉袋面', 
-                '118g袋', 
-                '包', 
-                2.5, 
-                '康师傅', 
-                '天津顶益食品有限公司', 
-                '天津', 
-                '2024-11-01 13:46:42', 
-                '2024-12-01 13:46:42'
+                '6903252710175',
+                '康师傅经典香辣牛肉袋面',
+                2018.0,
+                482.0,
+                52.60,
+                27.10,
+                7.10,
+                2606.0
             )
         """.trimIndent())
         Log.d(TAG, "初始数据插入完成")
@@ -109,15 +107,12 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                     FoodDetails(
                         barcode = it.getString(it.getColumnIndexOrThrow("barcode")),
                         name = it.getString(it.getColumnIndexOrThrow("name")),
-                        spec = it.getString(it.getColumnIndexOrThrow("spec")),
-                        unit = it.getString(it.getColumnIndexOrThrow("unit")),
-                        price = it.getDouble(it.getColumnIndexOrThrow("price")),
-                        brand = it.getString(it.getColumnIndexOrThrow("brand")),
-                        supplier = it.getString(it.getColumnIndexOrThrow("supplier")),
-                        madeIn = it.getString(it.getColumnIndexOrThrow("madeIn")),
-                        createdAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("createdAt"))),
-                        updatedAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("updatedAt"))),
-                        deletedAt = parseDateTime(it.getString(it.getColumnIndexOrThrow("deletedAt")))
+                        totalEnergyKJ = it.getDouble(it.getColumnIndexOrThrow("totalEnergyKJ")),
+                        totalEnergyKcal = it.getDouble(it.getColumnIndexOrThrow("totalEnergyKcal")),
+                        carbohydrates = it.getDouble(it.getColumnIndexOrThrow("carbohydrates")),
+                        fat = it.getDouble(it.getColumnIndexOrThrow("fat")),
+                        protein = it.getDouble(it.getColumnIndexOrThrow("protein")),
+                        sodium = it.getDouble(it.getColumnIndexOrThrow("sodium"))
                     )
                 } else {
                     Log.d(TAG, "未找到匹配记录")
@@ -126,15 +121,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
         } catch (e: Exception) {
             Log.e(TAG, "查询失败", e)
-            null
-        }
-    }
-
-    private fun parseDateTime(dateStr: String?): LocalDateTime? {
-        return try {
-            dateStr?.let { LocalDateTime.parse(it.replace(" ", "T")) }
-        } catch (e: Exception) {
-            Log.e(TAG, "解析日期失败: $dateStr", e)
             null
         }
     }

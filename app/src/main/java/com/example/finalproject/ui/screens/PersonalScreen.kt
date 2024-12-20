@@ -17,7 +17,7 @@ fun PersonalScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("个人中心") }
+                title = { Text("Personal Center") }
             )
         },
         bottomBar = {
@@ -32,7 +32,7 @@ fun PersonalScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Text("个人中心页面内容")
+            Text("Personal center page content")
         }
     }
 }

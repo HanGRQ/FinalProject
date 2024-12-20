@@ -41,28 +41,28 @@ fun BottomNavigationBar(
         ) {
             NavItem(
                 icon = Icons.Default.Home,
-                label = "首页",
+                label = "Home",
                 selected = currentRoute == "home",
                 onClick = { onNavigate("home") }
             )
 
             NavItem(
                 icon = Icons.Default.MonitorWeight,
-                label = "体重",
+                label = "Weight",
                 selected = currentRoute == "weight",
                 onClick = { onNavigate("weight") }
             )
 
             NavItem(
                 icon = Icons.Default.Assessment,
-                label = "数据",
+                label = "Data",
                 selected = currentRoute == "data",
                 onClick = { onNavigate("data") }
             )
 
             NavItem(
                 icon = Icons.Default.Person,
-                label = "我的",
+                label = "Personal",
                 selected = currentRoute == "personal",
                 onClick = { onNavigate("personal") }
             )

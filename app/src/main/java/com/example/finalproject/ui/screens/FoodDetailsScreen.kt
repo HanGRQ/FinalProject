@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,7 +18,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.finalproject.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,7 +29,7 @@ fun FoodDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "饮食详情", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(text = "Diet Details", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { onNavigateBack() }) {
                         Icon(
@@ -51,25 +49,23 @@ fun FoodDetailsScreen(
             )
         },
         content = { padding ->
-            // 添加垂直滚动
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .background(Color(0xFFF6F6F6))
-                    .verticalScroll(rememberScrollState()) // 使页面可滚动
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // Search Bar
                 OutlinedTextField(
                     value = "",
                     onValueChange = { /* Handle search input */ },
-                    placeholder = { Text("输入关键字搜索") },
+                    placeholder = { Text("Enter keywords to search") },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.ic_search),
                             contentDescription = "Search",
-                            modifier = Modifier.size(24.dp) // Adjusted size
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -77,7 +73,6 @@ fun FoodDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Nutritional Chart
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
@@ -91,7 +86,11 @@ fun FoodDetailsScreen(
                     ) {
                         Text(text = "582 kcal", fontSize = 28.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "12月1日  -  3餐物  -  49 kcal 剩余", fontSize = 14.sp, color = Color.Gray)
+                        Text(
+                            text = "December 1st - 3 Meals - 49 kcal Remaining",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
                         Image(
@@ -105,29 +104,26 @@ fun FoodDetailsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Nutritional Breakdown
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    NutritionalInfo("总热量", "582", "92%")
-                    NutritionalInfo("碳水化合物", "58g", "17%")
-                    NutritionalInfo("脂肪", "26g", "28%")
-                    NutritionalInfo("蛋白质", "28g", "45%")
+                    NutritionalInfo("Total Energy", "582", "92%")
+                    NutritionalInfo("Carbohydrates", "58g", "17%")
+                    NutritionalInfo("Fat", "26g", "28%")
+                    NutritionalInfo("Protein", "28g", "45%")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Food Data Section
-                Text(text = "饮食数据", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = "Diet Data", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                FoodItem("热狗", "1份", 152, 0, 8, 13)
-                FoodItem("甜甜圈", "1份", 170, 13, 9, 8)
-                FoodItem("蛋糕", "1份", 253, 39, 88, 253)
+                FoodItem("Hot Dog", "1 serving", 152, 0, 8, 13)
+                FoodItem("Donut", "1 serving", 170, 13, 9, 8)
+                FoodItem("Cake", "1 serving", 253, 39, 88, 253)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Barcode Scan Button
                 Button(
                     onClick = { onScanButtonClick() },
                     shape = RoundedCornerShape(16.dp),
@@ -143,13 +139,12 @@ fun FoodDetailsScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "扫描添加饮食", color = Color.White, fontSize = 16.sp)
+                    Text(text = "Scan to Add Food", color = Color.White, fontSize = 16.sp)
                 }
             }
         }
     )
 }
-
 
 @Composable
 fun NutritionalInfo(label: String, value: String, percentage: String) {
