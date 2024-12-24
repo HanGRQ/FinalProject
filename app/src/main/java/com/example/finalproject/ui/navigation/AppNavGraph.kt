@@ -133,6 +133,24 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        // 个人详情页面
+        composable("personal_details") {
+            PersonalDetailsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // 设置页面
+        composable("settings") {
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // 扫描页面
         composable("scan") {
             Log.d(TAG, "导航到扫描页面")
