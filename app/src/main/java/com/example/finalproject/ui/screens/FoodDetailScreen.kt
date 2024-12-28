@@ -110,7 +110,7 @@ fun FoodDetailScreen(
                                 )
                                 Text(text = "Energy", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = (details.totalEnergyKcal / 2000).toFloat(), // 假设每日推荐摄入量为2000kcal
+                                    progress = (details.totalEnergyKcal / 2000).toFloat(),
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFF4CAF50)
                                 )
@@ -122,7 +122,7 @@ fun FoodDetailScreen(
                                 )
                                 Text(text = "Carbs", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = (details.carbohydrates / 300).toFloat(), // 假设每日推荐摄入量为300g
+                                    progress = (details.carbohydrates / 300).toFloat(),
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFF2196F3)
                                 )
@@ -143,7 +143,7 @@ fun FoodDetailScreen(
                                 )
                                 Text(text = "Fat", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = (details.fat / 65).toFloat(), // 假设每日推荐摄入量为65g
+                                    progress = (details.fat / 65).toFloat(),
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFFFF9800)
                                 )
@@ -155,7 +155,7 @@ fun FoodDetailScreen(
                                 )
                                 Text(text = "Protein", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = (details.protein / 50).toFloat(), // 假设每日推荐摄入量为50g
+                                    progress = (details.protein / 50).toFloat(),
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFFF44336)
                                 )

@@ -71,26 +71,26 @@ fun PersonalDetailsScreen(
 
             // Personal Information
             ListItem(
-                headlineContent = { Text("年龄") },
-                supportingContent = { Text("23岁") },
+                headlineContent = { Text("Age") },
+                supportingContent = { Text("23") },
                 trailingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit") }
             )
 
             ListItem(
-                headlineContent = { Text("体重") },
+                headlineContent = { Text("Weight") },
                 supportingContent = { Text("65kg") },
                 trailingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit") }
             )
 
             ListItem(
-                headlineContent = { Text("身高") },
+                headlineContent = { Text("Height") },
                 supportingContent = { Text("175cm") },
                 trailingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit") }
             )
 
             ListItem(
-                headlineContent = { Text("性别") },
-                supportingContent = { Text("女士") },
+                headlineContent = { Text("Gender") },
+                supportingContent = { Text("Female") },
                 trailingContent = { Icon(Icons.Default.Edit, contentDescription = "Edit") }
             )
         }

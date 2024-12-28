@@ -28,16 +28,16 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     fun isDatabaseValid(): Boolean {
         return try {
             readableDatabase.version
-            Log.d(TAG, "数据库验证成功")
+            Log.d(TAG, "Database verification successful")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "数据库验证失败", e)
+            Log.e(TAG, "Database verification failed", e)
             false
         }
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        Log.d(TAG, "onCreate: 开始创建表")
+        Log.d(TAG, "onCreate: Start creating the table")
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS $TABLE_NAME (
                 barcode TEXT PRIMARY KEY,
@@ -50,19 +50,19 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 sodium REAL
             )
         """.trimIndent())
-        Log.d(TAG, "表创建完成")
+        Log.d(TAG, "Table creation completed")
 
         seedInitialData(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        Log.d(TAG, "onUpgrade: $oldVersion -> $newVersion，删除旧表并重新创建")
+        Log.d(TAG, "onUpgrade: $oldVersion -> $newVersion，Delete the old table and recreate it")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
         onCreate(db)
     }
 
     private fun seedInitialData(db: SQLiteDatabase) {
-        Log.d(TAG, "初始化数据")
+        Log.d(TAG, "Initialize Data")
         db.execSQL("""
             INSERT INTO $TABLE_NAME (
                 barcode, 
@@ -85,11 +85,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 2606.0
             )
         """.trimIndent())
-        Log.d(TAG, "初始数据插入完成")
+        Log.d(TAG, "Initial data insertion completed")
     }
 
     fun getFoodDetailsByBarcode(barcode: String): FoodDetails? {
-        Log.d(TAG, "开始查询条形码: $barcode")
+        Log.d(TAG, "Start querying barcode: $barcode")
         return try {
             val db = readableDatabase
             val cursor = db.query(
@@ -103,7 +103,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             )
             cursor.use {
                 if (it.moveToFirst()) {
-                    Log.d(TAG, "找到匹配记录")
+                    Log.d(TAG, "Find matching records")
                     FoodDetails(
                         barcode = it.getString(it.getColumnIndexOrThrow("barcode")),
                         name = it.getString(it.getColumnIndexOrThrow("name")),
@@ -115,12 +115,12 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                         sodium = it.getDouble(it.getColumnIndexOrThrow("sodium"))
                     )
                 } else {
-                    Log.d(TAG, "未找到匹配记录")
+                    Log.d(TAG, "No matching records found")
                     null
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "查询失败", e)
+            Log.e(TAG, "Query failed", e)
             null
         }
     }

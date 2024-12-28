@@ -93,30 +93,30 @@ fun UserGoalScreen(
                 GoalButton(
                     text = "Gain Weight",
                     icon = R.drawable.ic_banana,
-                    isSelected = selectedGoal == "增重",
+                    isSelected = selectedGoal == "Gain Weight",
                     onClick = {
-                        selectedGoal = "增重"
-                        viewModel.updateUserGoal("增重")
+                        selectedGoal = "Gain Weight"
+                        viewModel.updateUserGoal("Gain Weight")
                     }
                 )
 
                 GoalButton(
                     text = "Lose Weight",
                     icon = R.drawable.ic_dumbbell,
-                    isSelected = selectedGoal == "减重",
+                    isSelected = selectedGoal == "Lose Weight",
                     onClick = {
-                        selectedGoal = "减重"
-                        viewModel.updateUserGoal("减重")
+                        selectedGoal = "Lose Weight"
+                        viewModel.updateUserGoal("Lose Weight")
                     }
                 )
 
                 GoalButton(
                     text = "Stay Healthy",
                     icon = R.drawable.ic_trophy,
-                    isSelected = selectedGoal == "保持体重",
+                    isSelected = selectedGoal == "Stay Healthy",
                     onClick = {
-                        selectedGoal = "保持体重"
-                        viewModel.updateUserGoal("保持体重")
+                        selectedGoal = "Stay Healthy"
+                        viewModel.updateUserGoal("Stay Healthy")
                     }
                 )
             }

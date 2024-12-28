@@ -90,6 +90,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("com.google.mlkit:face-detection:16.1.5")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.lifecycle)

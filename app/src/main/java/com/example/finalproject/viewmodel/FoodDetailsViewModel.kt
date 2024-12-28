@@ -31,7 +31,6 @@ class FoodDetailsViewModel : ViewModel() {
 
     init {
         Log.d("FoodDetailsViewModel", "ViewModel initialized with hashCode: ${this.hashCode()}")
-        // 输出初始状态
         Log.d("FoodDetailsViewModel", "Initial state: ${_uiState.value}")
     }
 
@@ -63,5 +62,21 @@ class FoodDetailsViewModel : ViewModel() {
         )
 
         Log.d("FoodDetailsViewModel", "State after update: ${_uiState.value}")
+    }
+
+    fun deleteFood(food: FoodData) {
+        _uiState.update { currentState ->
+            val updatedFoodItems = currentState.foodItems.filter { it != food }
+            val updatedTotalNutrition = currentState.totalNutrition.copy(
+                energy = currentState.totalNutrition.energy - food.calories,
+                carbs = currentState.totalNutrition.carbs - food.carbs,
+                fat = currentState.totalNutrition.fat - food.fat,
+                protein = currentState.totalNutrition.protein - food.protein
+            )
+            currentState.copy(
+                foodItems = updatedFoodItems,
+                totalNutrition = updatedTotalNutrition
+            )
+        }
     }
 }

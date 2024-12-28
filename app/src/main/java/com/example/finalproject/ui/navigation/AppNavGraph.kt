@@ -29,11 +29,11 @@ fun AppNavGraph(navController: NavHostController) {
 
     val sharedViewModel: FoodDetailsViewModel = remember { FoodDetailsViewModel() }
 
-    // 使用 DisposableEffect 来处理数据库验证
+    // Using DisposableEffect to handle database validation
     DisposableEffect(Unit) {
         val isValid = databaseHelper.isDatabaseValid()
         if (!isValid) {
-            Log.e(TAG, "数据库初始化失败")
+            Log.e(TAG, "Database initialization failed")
         }
 
         onDispose {
@@ -42,7 +42,7 @@ fun AppNavGraph(navController: NavHostController) {
     }
 
     NavHost(navController = navController, startDestination = "splash") {
-        // 启动页面
+        // Startup Page
         composable("splash") {
             SplashScreen(onFinish = {
                 navController.navigate("onboarding") {
@@ -51,7 +51,7 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // 引导页
+        // Guide page
         composable("onboarding") {
             OnboardingScreen(onFinish = {
                 navController.navigate("login") {
@@ -60,7 +60,7 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // 登录页
+        // Login Page
         composable("login") {
             LoginScreen(onLoginSuccess = {
                 navController.navigate("loginsuccess") {
@@ -69,7 +69,7 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // 登录成功页
+        // Login success page
         composable("loginsuccess") {
             LoginSuccessScreen(onNavigateToSetup = {
                 navController.navigate("setup_plan_flow") {
@@ -78,7 +78,7 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // 设置计划流程
+        // Setting up the planning process
         composable("setup_plan_flow") {
             val viewModel: UserInfoViewModel = viewModel()
             SetupPlanFlow(
@@ -92,7 +92,7 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 主页
+        // main
         composable("home") {
             HomeScreen(
                 onNavigateToFoodDetails = { navController.navigate("food_details") },
@@ -103,7 +103,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 体重页面
         composable("weight") {
             WeightScreen(
                 onNavigateTo = { route ->
@@ -114,7 +113,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 数据页面
         composable("data") {
             DataScreen(
                 onNavigateTo = { route ->
@@ -125,7 +123,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 个人页面
         composable("personal") {
             PersonalScreen(
                 onNavigateTo = { route ->
@@ -136,7 +133,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 个人详情页面
         composable("personal_details") {
             PersonalDetailsScreen(
                 onNavigateBack = {
@@ -145,7 +141,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 设置页面
         composable("settings") {
             SettingsScreen(
                 onNavigateBack = {
@@ -154,7 +149,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 扫描页面
         composable("scan") {
             Log.d(TAG, "scan page")
             ScanScreen(
@@ -164,7 +158,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 食品详情页面（扫描后）
         composable(
             route = "food_details/{barcode}",
             arguments = listOf(navArgument("barcode") {
@@ -174,7 +167,7 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val barcode = backStackEntry.arguments?.getString("barcode")
             if (barcode != null) {
-                Log.d(TAG, "导航到食品详情页面，条形码: $barcode，使用 ViewModel: ${sharedViewModel.hashCode()}")
+                Log.d(TAG, "Navigate to the food details page, barcode: $barcode, using ViewModel: ${sharedViewModel.hashCode()}")
                 FoodDetailScreen(
                     navController = navController,
                     barcode = barcode,
@@ -184,9 +177,8 @@ fun AppNavGraph(navController: NavHostController) {
             }
         }
 
-        // 食品列表页面
         composable("food_details") {
-            Log.d(TAG, "导航到食品列表页面，使用 ViewModel: ${sharedViewModel.hashCode()}")
+            Log.d(TAG, "Navigate to the food list page, using ViewModel: ${sharedViewModel.hashCode()}")
             FoodDetailsScreen(
                 viewModel = sharedViewModel,  // 使用共享的 ViewModel
                 onScanButtonClick = { navController.navigate("scan") },
@@ -194,7 +186,6 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        // 心情详情页面
         composable("mood_details") {
             MoodDetailsScreen(
                 onNavigateBack = { navController.popBackStack() }

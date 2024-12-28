@@ -28,9 +28,8 @@ fun SplashScreen(onFinish: () -> Unit) {
         )
     }
 
-    // 延迟 2 秒后调用 onFinish() 跳转到下一个页面
     LaunchedEffect(Unit) {
-        delay(2000) // 延迟时间可以根据需要调整
-        onFinish() // 调用 onFinish 触发导航跳转
+        delay(2000)
+        onFinish()
     }
 }

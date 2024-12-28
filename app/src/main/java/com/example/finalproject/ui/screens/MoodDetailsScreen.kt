@@ -18,7 +18,7 @@ fun MoodDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "今日情绪", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text(text = "Present Emotion", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -36,8 +36,7 @@ fun MoodDetailsScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // 添加情绪详情页面的具体内容
-            Text(text = "情绪详情页面内容", fontSize = 16.sp)
+            Text(text = "Emotion details page content", fontSize = 16.sp)
         }
     }
 }

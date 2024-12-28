@@ -18,7 +18,6 @@ fun SetupPlanFlow(
         5 -> UserWeightScreen(onNext = { currentPage = 6 }, viewModel = viewModel)
         6 -> TargetWeightScreen(
             onNext = {
-                // 在这里保存所有用户数据
                 viewModel.saveUserInfo()
                 onFinish()
             },

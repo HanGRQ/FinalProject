@@ -93,20 +93,20 @@ fun UserGenderScreen(
                 GenderButton(
                     text = "Male",
                     icon = R.drawable.ic_male,
-                    isSelected = selectedGender == "男",
+                    isSelected = selectedGender == "Male",
                     onClick = {
-                        selectedGender = "男"
-                        viewModel.updateUserGender("男")
+                        selectedGender = "Male"
+                        viewModel.updateUserGender("Male")
                     }
                 )
 
                 GenderButton(
                     text = "Female",
                     icon = R.drawable.ic_female,
-                    isSelected = selectedGender == "女",
+                    isSelected = selectedGender == "Female",
                     onClick = {
-                        selectedGender = "女"
-                        viewModel.updateUserGender("女")
+                        selectedGender = "Female"
+                        viewModel.updateUserGender("Female")
                     }
                 )
             }

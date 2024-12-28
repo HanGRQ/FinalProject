@@ -1,7 +1,6 @@
 package com.example.finalproject.ui.screens
 
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,22 +9,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.finalproject.R
+import com.example.finalproject.ui.components.NutritionBarChart
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,6 +118,35 @@ fun FoodDetailsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 营养趋势图表
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Nutrition Trends",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    NutritionBarChart(
+                        foodItems = uiState.foodItems,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 食物列表
             Text(text = "Diet Data", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
@@ -135,7 +158,8 @@ fun FoodDetailsScreen(
                     calories = food.calories,
                     carbs = food.carbs.toInt(),
                     fat = food.fat.toInt(),
-                    protein = food.protein.toInt()
+                    protein = food.protein.toInt(),
+                    onDelete = { viewModel.deleteFood(food) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -176,7 +200,15 @@ fun NutritionalInfo(label: String, value: String, percentage: String) {
 }
 
 @Composable
-fun FoodItem(name: String, portion: String, calories: Int, carbs: Int, fat: Int, protein: Int) {
+fun FoodItem(
+    name: String,
+    portion: String,
+    calories: Int,
+    carbs: Int,
+    fat: Int,
+    protein: Int,
+    onDelete: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -206,19 +238,14 @@ fun FoodItem(name: String, portion: String, calories: Int, carbs: Int, fat: Int,
                 }
             }
 
-            Row {
-                IconButton(onClick = { /* Edit item logic */ }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_edit),
-                        contentDescription = "Edit"
-                    )
-                }
-                IconButton(onClick = { /* Delete item logic */ }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_delete),
-                        contentDescription = "Delete"
-                    )
-                }
+            IconButton(
+                onClick = onDelete
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "Delete",
+                    tint = Color.Red
+                )
             }
         }
     }

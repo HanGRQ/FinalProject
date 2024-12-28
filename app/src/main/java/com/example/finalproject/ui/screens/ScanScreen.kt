@@ -263,7 +263,7 @@ private fun CameraPreview(onBarcodeScanned: (String) -> Unit) {
                             }
                         }
                         .addOnFailureListener { e ->
-                            Log.e(TAG, "条形码识别失败", e)
+                            Log.e(TAG, "Barcode recognition failed", e)
                         }
                         .addOnCompleteListener {
                             imageProxy.close()
@@ -272,7 +272,7 @@ private fun CameraPreview(onBarcodeScanned: (String) -> Unit) {
                     imageProxy.close()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "处理图像时出错", e)
+                Log.e(TAG, "Error processing image", e)
                 imageProxy.close()
             }
         }
@@ -285,7 +285,7 @@ private fun CameraPreview(onBarcodeScanned: (String) -> Unit) {
             )
             preview.setSurfaceProvider(previewView.surfaceProvider)
         } catch (e: Exception) {
-            Log.e(TAG, "绑定相机时出错", e)
+            Log.e(TAG, "Error binding camera", e)
         }
     }
 }

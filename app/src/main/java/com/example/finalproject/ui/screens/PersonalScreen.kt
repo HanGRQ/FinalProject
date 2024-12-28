@@ -67,7 +67,7 @@ fun PersonalScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("23岁", color = Color.Gray)
+                Text("23", color = Color.Gray)
                 Text(" · ", color = Color.Gray)
                 Text("175cm", color = Color.Gray)
                 Text(" · ", color = Color.Gray)

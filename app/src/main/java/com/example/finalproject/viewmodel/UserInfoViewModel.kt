@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class UserInfoViewModel : ViewModel() {
-    // 用户信息状态
     private val _userName = MutableStateFlow("")
     val userName: StateFlow<String> = _userName.asStateFlow()
 
@@ -51,10 +50,7 @@ class UserInfoViewModel : ViewModel() {
         _targetWeight.value = weight
     }
 
-    // 保存用户信息
     fun saveUserInfo() {
-        // 这里可以添加实际的数据保存逻辑，比如保存到数据库或 SharedPreferences
-        // 目前只是打印日志确认数据收集完成
         println("Saving user info:")
         println("Name: ${userName.value}")
         println("Goal: ${userGoal.value}")
