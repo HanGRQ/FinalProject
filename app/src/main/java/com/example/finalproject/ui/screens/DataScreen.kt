@@ -54,7 +54,7 @@ fun DataScreen(
                         .clip(CircleShape)
                 )
                 Text(
-                    text = "2022-12-01",
+                    text = "2024-12-01",
                     color = Color.Gray
                 )
                 IconButton(

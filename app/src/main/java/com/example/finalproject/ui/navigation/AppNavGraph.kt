@@ -16,6 +16,7 @@ import com.example.finalproject.viewmodel.ScanViewModel
 import com.example.finalproject.viewmodel.UserInfoViewModel
 import com.example.finalproject.utils.DatabaseHelper
 import androidx.compose.ui.platform.LocalContext
+import com.example.finalproject.viewmodel.FoodDetailsViewModel
 
 private const val TAG = "AppNavGraph"
 
@@ -25,6 +26,8 @@ fun AppNavGraph(navController: NavHostController) {
     val context = LocalContext.current
     val databaseHelper = remember { DatabaseHelper(context) }
     val scanViewModel: ScanViewModel = viewModel()
+
+    val sharedViewModel: FoodDetailsViewModel = remember { FoodDetailsViewModel() }
 
     // 使用 DisposableEffect 来处理数据库验证
     DisposableEffect(Unit) {
@@ -153,7 +156,7 @@ fun AppNavGraph(navController: NavHostController) {
 
         // 扫描页面
         composable("scan") {
-            Log.d(TAG, "导航到扫描页面")
+            Log.d(TAG, "scan page")
             ScanScreen(
                 navController = navController,
                 viewModel = scanViewModel,
@@ -171,18 +174,21 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val barcode = backStackEntry.arguments?.getString("barcode")
             if (barcode != null) {
-                Log.d(TAG, "导航到食品详情页面，条形码: $barcode")
+                Log.d(TAG, "导航到食品详情页面，条形码: $barcode，使用 ViewModel: ${sharedViewModel.hashCode()}")
                 FoodDetailScreen(
                     navController = navController,
                     barcode = barcode,
-                    databaseHelper = databaseHelper
+                    databaseHelper = databaseHelper,
+                    viewModel = sharedViewModel
                 )
             }
         }
 
         // 食品列表页面
         composable("food_details") {
+            Log.d(TAG, "导航到食品列表页面，使用 ViewModel: ${sharedViewModel.hashCode()}")
             FoodDetailsScreen(
+                viewModel = sharedViewModel,  // 使用共享的 ViewModel
                 onScanButtonClick = { navController.navigate("scan") },
                 onNavigateBack = { navController.popBackStack() }
             )

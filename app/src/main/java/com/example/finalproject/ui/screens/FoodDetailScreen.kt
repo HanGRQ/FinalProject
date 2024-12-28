@@ -1,5 +1,6 @@
 package com.example.finalproject.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,17 +14,21 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.finalproject.R
 import com.example.finalproject.utils.DatabaseHelper
+import com.example.finalproject.viewmodel.FoodDetailsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodDetailScreen(
     navController: NavController,
     barcode: String,
-    databaseHelper: DatabaseHelper
+    databaseHelper: DatabaseHelper,
+    viewModel: FoodDetailsViewModel
 ) {
     val foodDetails = remember {
         databaseHelper.getFoodDetailsByBarcode(barcode)
     }
+
+    var isAdded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -38,7 +43,19 @@ fun FoodDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Handle add action */ }) {
+                    IconButton(
+                        onClick = {
+                            foodDetails?.let { details ->
+                                Log.d("FoodDetailScreen", "Adding food: ${details.name}")
+                                viewModel.addFood(details)
+                                isAdded = true
+                                navController.popBackStack(
+                                    route = "food_details",
+                                    inclusive = false
+                                )
+                            }
+                        }
+                    ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_add),
                             contentDescription = "Add"
@@ -88,21 +105,24 @@ fun FoodDetailScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "${details.totalEnergyKcal}kcal",
+                                    text = "${details.totalEnergyKcal.toInt()}kcal",
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(text = "Energy", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = 0.90f,
+                                    progress = (details.totalEnergyKcal / 2000).toFloat(), // 假设每日推荐摄入量为2000kcal
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFF4CAF50)
                                 )
                             }
                             Column {
-                                Text(text = "0g", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "${details.carbohydrates}g",
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(text = "Carbs", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = 0f,
+                                    progress = (details.carbohydrates / 300).toFloat(), // 假设每日推荐摄入量为300g
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFF2196F3)
                                 )
@@ -117,19 +137,25 @@ fun FoodDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(text = "8g", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "${details.fat}g",
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(text = "Fat", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = 0.48f,
+                                    progress = (details.fat / 65).toFloat(), // 假设每日推荐摄入量为65g
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFFFF9800)
                                 )
                             }
                             Column {
-                                Text(text = "13g", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "${details.protein}g",
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(text = "Protein", color = Color.Gray)
                                 LinearProgressIndicator(
-                                    progress = 0.52f,
+                                    progress = (details.protein / 50).toFloat(), // 假设每日推荐摄入量为50g
                                     modifier = Modifier.width(100.dp),
                                     color = Color(0xFFF44336)
                                 )
@@ -145,16 +171,12 @@ fun FoodDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    NutritionRow("Energy", "1271 kJ")
-                    NutritionRow("Fat", "9g")
-                    NutritionRow("Saturated Fat", "5g")
-                    NutritionRow("Polyunsaturated Fat", "4g")
-                    NutritionRow("Monounsaturated Fat", "7g")
-                    NutritionRow("Cholesterol", "114mg")
-                    NutritionRow("Fiber", "0g")
-                    NutritionRow("Sugar", "0g")
-                    NutritionRow("Calcium", "503mg")
-                    NutritionRow("Iron", "272mg")
+                    NutritionRow("Energy (kJ)", "${details.totalEnergyKJ} kJ")
+                    NutritionRow("Energy (kcal)", "${details.totalEnergyKcal} kcal")
+                    NutritionRow("Fat", "${details.fat}g")
+                    NutritionRow("Carbohydrates", "${details.carbohydrates}g")
+                    NutritionRow("Protein", "${details.protein}g")
+                    NutritionRow("Sodium", "${details.sodium}mg")
                 }
             } ?: Text("Product not found")
         }
