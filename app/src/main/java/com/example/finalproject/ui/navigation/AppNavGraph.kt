@@ -187,8 +187,9 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable("mood_details") {
-            MoodDetailsScreen(
-                onNavigateBack = { navController.popBackStack() }
+            EmotionDetailsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAddClick = { navController.navigate("add_emotion") }
             )
         }
     }
