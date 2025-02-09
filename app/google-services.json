@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "140845605756",
+    "project_id": "foodmind-3c39d",
+    "storage_bucket": "foodmind-3c39d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:140845605756:android:eb22fb95b5acb41f82baf9",
+        "android_client_info": {
+          "package_name": "com.example.finalproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD89sHOkhYZRlKl5THq9olaSn437rb70CI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

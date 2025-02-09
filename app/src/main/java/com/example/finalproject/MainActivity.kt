@@ -1,5 +1,3 @@
-// 文件路径：com/example/finalproject/MainActivity.kt
-
 package com.example.finalproject
 
 import android.os.Bundle
@@ -9,10 +7,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.finalproject.ui.navigation.AppNavGraph
 import com.example.finalproject.ui.theme.FinalProjectTheme
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             FinalProjectTheme {
                 val navController = rememberNavController()

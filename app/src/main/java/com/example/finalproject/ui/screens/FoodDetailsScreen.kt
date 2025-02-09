@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.NutritionBarChart
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
+import com.example.finalproject.utils.FoodResponse  // 添加这个导入
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,14 +30,6 @@ fun FoodDetailsScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        Log.d("FoodDetailsScreen", "Screen initialized with ViewModel: ${viewModel.hashCode()}")
-    }
-
-    LaunchedEffect(uiState) {
-        Log.d("FoodDetailsScreen", "State updated: $uiState")
-    }
 
     Scaffold(
         topBar = {
@@ -61,112 +54,111 @@ fun FoodDetailsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // 能量汇总卡片
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            if (uiState.foodItems.isEmpty()) {
+                Text(text = "No food data available", fontSize = 18.sp, color = Color.Gray)
+            } else {
+                // Total Energy Card
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
                 ) {
-                    Text(
-                        text = "${uiState.totalNutrition.energy} kcal",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${uiState.totalNutrition.energy.toInt()} kcal",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${uiState.foodItems.size} Meals",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Nutrition Information Row
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    NutritionalInfo(
+                        "Total Energy",
+                        "${uiState.totalNutrition.energy.toInt()}",
+                        "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%"
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${uiState.foodItems.size} Meals",
-                        fontSize = 14.sp,
-                        color = Color.Gray
+                    NutritionalInfo(
+                        "Carbohydrates",
+                        "${uiState.totalNutrition.carbs.toInt()}g",
+                        "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%"
+                    )
+                    NutritionalInfo(
+                        "Fat",
+                        "${uiState.totalNutrition.fat.toInt()}g",
+                        "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%"
+                    )
+                    NutritionalInfo(
+                        "Protein",
+                        "${uiState.totalNutrition.protein.toInt()}g",
+                        "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%"
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // 营养信息
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                NutritionalInfo(
-                    "Total Energy",
-                    "${uiState.totalNutrition.energy}",
-                    "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Carbohydrates",
-                    "${uiState.totalNutrition.carbs.toInt()}g",
-                    "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Fat",
-                    "${uiState.totalNutrition.fat.toInt()}g",
-                    "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Protein",
-                    "${uiState.totalNutrition.protein.toInt()}g",
-                    "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 营养趋势图表
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                // Nutrition Chart
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
                 ) {
-                    Text(
-                        text = "Nutrition Trends",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    NutritionBarChart(
-                        foodItems = uiState.foodItems,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Nutrition Trends",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        NutritionBarChart(
+                            foodItems = uiState.foodItems,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // 食物列表
-            Text(text = "Diet Data", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            uiState.foodItems.forEach { food ->
-                FoodItem(
-                    name = food.name,
-                    portion = food.portion,
-                    calories = food.calories,
-                    carbs = food.carbs.toInt(),
-                    fat = food.fat.toInt(),
-                    protein = food.protein.toInt(),
-                    onDelete = { viewModel.deleteFood(food) }
-                )
+                // Food Items List
+                Text(text = "Diet Data", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
+
+                uiState.foodItems.forEach { food ->
+                    FoodItem(
+                        food = food,
+                        onDelete = { viewModel.deleteFoodFromFirestore(food) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 扫描按钮
+            // Scan Button
             Button(
                 onClick = onScanButtonClick,
                 shape = RoundedCornerShape(16.dp),
@@ -201,12 +193,7 @@ fun NutritionalInfo(label: String, value: String, percentage: String) {
 
 @Composable
 fun FoodItem(
-    name: String,
-    portion: String,
-    calories: Int,
-    carbs: Int,
-    fat: Int,
-    protein: Int,
+    food: FoodResponse,
     onDelete: () -> Unit
 ) {
     Card(
@@ -224,23 +211,45 @@ fun FoodItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(text = name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(text = portion, fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = food.product_name.ifEmpty { "Unknown Food" },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "100g",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row {
-                    Text(text = "${calories}kcal", fontSize = 14.sp, color = Color(0xFF004D40))
+                    Text(
+                        text = "${food.energy_kcal.toInt()}kcal",
+                        fontSize = 14.sp,
+                        color = Color(0xFF004D40)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "${carbs}g", fontSize = 14.sp, color = Color(0xFFFFA726))
+                    Text(
+                        text = "${food.carbohydrates.toInt()}g",
+                        fontSize = 14.sp,
+                        color = Color(0xFFFFA726)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "${fat}g", fontSize = 14.sp, color = Color(0xFFF06292))
+                    Text(
+                        text = "${food.fat.toInt()}g",
+                        fontSize = 14.sp,
+                        color = Color(0xFFF06292)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "${protein}g", fontSize = 14.sp, color = Color(0xFF9575CD))
+                    Text(
+                        text = "${food.proteins.toInt()}g",
+                        fontSize = 14.sp,
+                        color = Color(0xFF9575CD)
+                    )
                 }
             }
 
-            IconButton(
-                onClick = onDelete
-            ) {
+            IconButton(onClick = onDelete) {
                 Icon(
                     painter = painterResource(R.drawable.ic_delete),
                     contentDescription = "Delete",

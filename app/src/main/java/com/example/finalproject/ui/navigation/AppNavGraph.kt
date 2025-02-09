@@ -3,7 +3,6 @@ package com.example.finalproject.ui.navigation
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,8 +13,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalproject.ui.screens.*
 import com.example.finalproject.viewmodel.ScanViewModel
 import com.example.finalproject.viewmodel.UserInfoViewModel
-import com.example.finalproject.utils.DatabaseHelper
-import androidx.compose.ui.platform.LocalContext
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
 
 private const val TAG = "AppNavGraph"
@@ -23,23 +20,8 @@ private const val TAG = "AppNavGraph"
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    val context = LocalContext.current
-    val databaseHelper = remember { DatabaseHelper(context) }
     val scanViewModel: ScanViewModel = viewModel()
-
     val sharedViewModel: FoodDetailsViewModel = remember { FoodDetailsViewModel() }
-
-    // Using DisposableEffect to handle database validation
-    DisposableEffect(Unit) {
-        val isValid = databaseHelper.isDatabaseValid()
-        if (!isValid) {
-            Log.e(TAG, "Database initialization failed")
-        }
-
-        onDispose {
-            databaseHelper.close()
-        }
-    }
 
     NavHost(navController = navController, startDestination = "splash") {
         // Startup Page
@@ -154,7 +136,10 @@ fun AppNavGraph(navController: NavHostController) {
             ScanScreen(
                 navController = navController,
                 viewModel = scanViewModel,
-                databaseHelper = databaseHelper
+                onScanComplete = { barcode ->
+                    sharedViewModel.fetchFoodDetailsFromFirestore(barcode)
+                    navController.navigate("food_details/$barcode")
+                }
             )
         }
 
@@ -167,20 +152,19 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val barcode = backStackEntry.arguments?.getString("barcode")
             if (barcode != null) {
-                Log.d(TAG, "Navigate to the food details page, barcode: $barcode, using ViewModel: ${sharedViewModel.hashCode()}")
+                Log.d(TAG, "Navigate to food details page, barcode: $barcode")
                 FoodDetailScreen(
                     navController = navController,
                     barcode = barcode,
-                    databaseHelper = databaseHelper,
                     viewModel = sharedViewModel
                 )
             }
         }
 
         composable("food_details") {
-            Log.d(TAG, "Navigate to the food list page, using ViewModel: ${sharedViewModel.hashCode()}")
+            Log.d(TAG, "Navigate to food list page")
             FoodDetailsScreen(
-                viewModel = sharedViewModel,  // 使用共享的 ViewModel
+                viewModel = sharedViewModel,
                 onScanButtonClick = { navController.navigate("scan") },
                 onNavigateBack = { navController.popBackStack() }
             )

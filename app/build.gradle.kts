@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -54,6 +55,7 @@ android {
 dependencies {
     // Hilt Core
     implementation ("com.google.dagger:hilt-android:2.48")
+    implementation(libs.firebase.crashlytics.buildtools)
     kapt ("com.google.dagger:hilt-android-compiler:2.48")
 
     // Room
@@ -91,6 +93,9 @@ dependencies {
     implementation("com.google.mlkit:face-detection:16.1.5")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.7.1")
 
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.lifecycle)

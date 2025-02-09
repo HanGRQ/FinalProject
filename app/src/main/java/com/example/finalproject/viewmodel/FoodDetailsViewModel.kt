@@ -2,81 +2,70 @@ package com.example.finalproject.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.finalproject.utils.FoodData
-import com.example.finalproject.utils.FoodDetails
+import androidx.lifecycle.viewModelScope
+import com.example.finalproject.utils.FoodResponse
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 data class TotalNutrition(
-    val energy: Int = 0,
+    val energy: Double = 0.0,
     val carbs: Double = 0.0,
     val fat: Double = 0.0,
     val protein: Double = 0.0
 )
 
-data class FoodUiState(
-    val foodItems: List<FoodData> = emptyList(),
-    val totalNutrition: TotalNutrition = TotalNutrition(
-        energy = 0,
-        carbs = 0.0,
-        fat = 0.0,
-        protein = 0.0
-    )
+data class UiState(
+    val foodItems: List<FoodResponse> = emptyList(),
+    val totalNutrition: TotalNutrition = TotalNutrition()
 )
 
 class FoodDetailsViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(FoodUiState())
-    val uiState = _uiState.asStateFlow()
+    private val db = FirebaseFirestore.getInstance()
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
-    init {
-        Log.d("FoodDetailsViewModel", "ViewModel initialized with hashCode: ${this.hashCode()}")
-        Log.d("FoodDetailsViewModel", "Initial state: ${_uiState.value}")
+    fun fetchFoodDetailsFromFirestore(barcode: String) {
+        val formattedBarcode = barcode.padStart(13, '0')
+        Log.d("Firestore", "Querying barcode: $formattedBarcode")
+
+        db.collection("foods")
+            .whereEqualTo("barcode", formattedBarcode)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val foodList = documents.mapNotNull { it.toObject(FoodResponse::class.java) }
+                    _uiState.value = UiState(foodList, calculateTotalNutrition(foodList))
+                    Log.d("Firestore", "Successfully fetched food items")
+                } else {
+                    Log.d("Firestore", "No food items found for barcode: $formattedBarcode")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Error fetching food items", e)
+            }
     }
 
-    fun addFood(foodDetails: FoodDetails) {
-        Log.d("FoodDetailsViewModel", "Adding food: ${foodDetails.name}")
-        Log.d("FoodDetailsViewModel", "Current state before update: ${_uiState.value}")
-
-        val newFood = FoodData(
-            name = foodDetails.name,
-            portion = "1 serving",
-            calories = foodDetails.totalEnergyKcal.toInt(),
-            carbs = foodDetails.carbohydrates,
-            fat = foodDetails.fat,
-            protein = foodDetails.protein
-        )
-
-        val currentState = _uiState.value
-        val updatedFoodItems = currentState.foodItems + newFood
-        val updatedTotalNutrition = currentState.totalNutrition.copy(
-            energy = currentState.totalNutrition.energy + foodDetails.totalEnergyKcal.toInt(),
-            carbs = currentState.totalNutrition.carbs + foodDetails.carbohydrates,
-            fat = currentState.totalNutrition.fat + foodDetails.fat,
-            protein = currentState.totalNutrition.protein + foodDetails.protein
-        )
-
-        _uiState.value = currentState.copy(
-            foodItems = updatedFoodItems,
-            totalNutrition = updatedTotalNutrition
-        )
-
-        Log.d("FoodDetailsViewModel", "State after update: ${_uiState.value}")
+    fun deleteFoodFromFirestore(food: FoodResponse) {
+        val formattedBarcode = food.barcode.padStart(13, '0')
+        db.collection("foods").document(formattedBarcode)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("Firestore", "✅ 已删除食品: ${food.product_name}")
+                val updatedList = _uiState.value.foodItems.filter { it.barcode != formattedBarcode }
+                _uiState.value = UiState(updatedList, calculateTotalNutrition(updatedList))
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "❌ 删除失败: ${e.message}")
+            }
     }
 
-    fun deleteFood(food: FoodData) {
-        _uiState.update { currentState ->
-            val updatedFoodItems = currentState.foodItems.filter { it != food }
-            val updatedTotalNutrition = currentState.totalNutrition.copy(
-                energy = currentState.totalNutrition.energy - food.calories,
-                carbs = currentState.totalNutrition.carbs - food.carbs,
-                fat = currentState.totalNutrition.fat - food.fat,
-                protein = currentState.totalNutrition.protein - food.protein
-            )
-            currentState.copy(
-                foodItems = updatedFoodItems,
-                totalNutrition = updatedTotalNutrition
-            )
-        }
+    private fun calculateTotalNutrition(foodItems: List<FoodResponse>): TotalNutrition {
+        val energy = foodItems.sumOf { it.energy_kcal ?: 0.0 }
+        val carbs = foodItems.sumOf { it.carbohydrates ?: 0.0 }
+        val fat = foodItems.sumOf { it.fat ?: 0.0 }
+        val protein = foodItems.sumOf { it.proteins ?: 0.0 }
+        return TotalNutrition(energy, carbs, fat, protein)
     }
 }

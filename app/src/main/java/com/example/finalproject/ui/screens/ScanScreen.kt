@@ -30,7 +30,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.finalproject.R
-import com.example.finalproject.utils.DatabaseHelper
 import com.example.finalproject.viewmodel.ScanViewModel
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -42,7 +41,7 @@ private const val TAG = "ScanScreen"
 fun ScanScreen(
     navController: NavController,
     viewModel: ScanViewModel,
-    databaseHelper: DatabaseHelper
+    onScanComplete: (String) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -57,7 +56,6 @@ fun ScanScreen(
         )
     }
 
-    // 请求权限
     if (!hasCameraPermission) {
         LaunchedEffect(Unit) {
             ActivityCompat.requestPermissions(
@@ -70,35 +68,16 @@ fun ScanScreen(
         return
     }
 
-    // 原有的测试代码和扫描结果处理
-    LaunchedEffect(Unit) {
-        try {
-            val testBarcode = "6903252710175"
-            Log.d("ScanScreen", "Testing barcode: $testBarcode")
-            val result = databaseHelper.getFoodDetailsByBarcode(testBarcode)
-            Log.d("ScanScreen", "Query result: ${result?.name ?: "Not found"}")
-        } catch (e: Exception) {
-            Log.e("ScanScreen", "Test query failed", e)
-        }
-    }
-
     LaunchedEffect(scanResult) {
         scanResult?.let { barcode ->
             if (!isProcessingBarcode) {
                 isProcessingBarcode = true
                 try {
                     Log.d(TAG, "Processing scan result: $barcode")
-                    val foodDetails = databaseHelper.getFoodDetailsByBarcode(barcode)
-                    if (foodDetails != null) {
-                        Log.d(TAG, "Found product, preparing navigation")
-                        delay(100)
-                        navController.navigate("food_details/$barcode") {
-                            launchSingleTop = true
-                        }
-                    } else {
-                        Toast.makeText(
-                            context, "Product not found: $barcode", Toast.LENGTH_LONG
-                        ).show()
+                    onScanComplete(barcode)
+                    delay(100)
+                    navController.navigate("food_details/$barcode") {
+                        launchSingleTop = true
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing scan result", e)

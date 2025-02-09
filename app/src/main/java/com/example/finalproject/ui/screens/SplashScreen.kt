@@ -15,6 +15,13 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onFinish: () -> Unit) {
+    // 首先设置 LaunchedEffect
+    LaunchedEffect(true) {
+        delay(2000)
+        onFinish()
+    }
+
+    // 然后是 UI 部分
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -26,10 +33,5 @@ fun SplashScreen(onFinish: () -> Unit) {
             contentDescription = "App Logo",
             modifier = Modifier.size(150.dp)
         )
-    }
-
-    LaunchedEffect(Unit) {
-        delay(2000)
-        onFinish()
     }
 }

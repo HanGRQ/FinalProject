@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.finalproject.utils.FoodData
+import com.example.finalproject.utils.FoodResponse
 import android.graphics.Color as AndroidColor
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
@@ -16,7 +16,7 @@ import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 
 @Composable
-fun NutritionBarChart(foodItems: List<FoodData>, modifier: Modifier = Modifier) {
+fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     AndroidView(
@@ -46,16 +46,16 @@ fun NutritionBarChart(foodItems: List<FoodData>, modifier: Modifier = Modifier) 
         },
         update = { chart ->
             val entries1 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.calories.toFloat())
+                BarEntry(index.toFloat(), item.energy_kcal.toFloat())
             }
             val entries2 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.carbs.toFloat())
+                BarEntry(index.toFloat(), item.carbohydrates.toFloat())
             }
             val entries3 = foodItems.mapIndexed { index, item ->
                 BarEntry(index.toFloat(), item.fat.toFloat())
             }
             val entries4 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.protein.toFloat())
+                BarEntry(index.toFloat(), item.proteins.toFloat())
             }
 
             val set1 = BarDataSet(entries1, "Calories").apply {
@@ -73,10 +73,10 @@ fun NutritionBarChart(foodItems: List<FoodData>, modifier: Modifier = Modifier) 
 
             val groupSpace = 0.4f
             val barSpace = 0.02f
-            var barWidth = 0.2f
+            val barWidth = 0.2f
 
             val barData = BarData(set1, set2, set3, set4).apply {
-                barWidth = barWidth
+                this.barWidth = barWidth
             }
 
             chart.data = barData
