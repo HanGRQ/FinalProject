@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+# 忽略 Firebase 服务账号凭证文件
+backend/foodmind-3c39d.json
+
+backend/.env
