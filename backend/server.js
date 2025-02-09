@@ -9,7 +9,7 @@ dotenv.config();
 
 if (!admin.apps.length) { 
     admin.initializeApp({
-        credential: admin.credential.cert(require("./foodmind-3c39d.json"))
+        credential: admin.credential.cert(require("E:/AndroidProject/key/foodmind-3c39d.json"))
     });
 }
 
