@@ -6,7 +6,7 @@ data class FoodResponse(
     val energy_kj: Double = 0.0,
     val energy_kcal: Double = 0.0,
     val carbohydrates: Double = 0.0,
-    val sugar: Double = 0.0,
+    val sugars: Double = 0.0,
     val fat: Double = 0.0,
-    val proteins: Double = 0.0
+    val proteins: Double = 0.0,
 )

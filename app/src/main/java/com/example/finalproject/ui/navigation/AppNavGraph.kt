@@ -76,7 +76,10 @@ fun AppNavGraph(navController: NavHostController) {
 
         // main
         composable("home") {
+            val viewModel = viewModel<FoodDetailsViewModel>() // 如果使用 androidx.lifecycle:lifecycle-viewmodel-compose
+
             HomeScreen(
+                viewModel = viewModel, // 添加 viewModel 参数
                 onNavigateToFoodDetails = { navController.navigate("food_details") },
                 onNavigateToMoodDetails = { navController.navigate("mood_details") },
                 onNavigateToWeight = { navController.navigate("weight") },

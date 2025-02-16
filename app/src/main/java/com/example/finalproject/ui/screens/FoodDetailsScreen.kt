@@ -1,11 +1,12 @@
 package com.example.finalproject.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
@@ -15,12 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.NutritionBarChart
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
-import com.example.finalproject.utils.FoodResponse  // 添加这个导入
+import com.example.finalproject.utils.FoodResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +36,13 @@ fun FoodDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Diet Details", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Diet Details",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -54,111 +62,130 @@ fun FoodDetailsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            if (uiState.foodItems.isEmpty()) {
-                Text(text = "No food data available", fontSize = 18.sp, color = Color.Gray)
-            } else {
-                // Total Energy Card
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
+            // 总能量卡片
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "${uiState.totalNutrition.energy.toInt()} kcal",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${uiState.foodItems.size} Meals",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Nutrition Information Row
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    NutritionalInfo(
-                        "Total Energy",
-                        "${uiState.totalNutrition.energy.toInt()}",
-                        "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%"
-                    )
-                    NutritionalInfo(
-                        "Carbohydrates",
-                        "${uiState.totalNutrition.carbs.toInt()}g",
-                        "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%"
-                    )
-                    NutritionalInfo(
-                        "Fat",
-                        "${uiState.totalNutrition.fat.toInt()}g",
-                        "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%"
-                    )
-                    NutritionalInfo(
-                        "Protein",
-                        "${uiState.totalNutrition.protein.toInt()}g",
-                        "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%"
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Nutrition Chart
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Nutrition Trends",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        NutritionBarChart(
-                            foodItems = uiState.foodItems,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(250.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Food Items List
-                Text(text = "Diet Data", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                uiState.foodItems.forEach { food ->
-                    FoodItem(
-                        food = food,
-                        onDelete = { viewModel.deleteFoodFromFirestore(food) }
+                    Text(
+                        text = "${uiState.totalNutrition.energy.toInt()} kcal",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${uiState.foodItems.size} Meals",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Scan Button
+            // 营养信息行
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                NutritionalInfo(
+                    "Total Energy",
+                    "${uiState.totalNutrition.energy.toInt()}",
+                    "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%"
+                )
+                NutritionalInfo(
+                    "Carbohydrates",
+                    "${uiState.totalNutrition.carbs.toInt()}g",
+                    "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%"
+                )
+                NutritionalInfo(
+                    "Fat",
+                    "${uiState.totalNutrition.fat.toInt()}g",
+                    "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%"
+                )
+                NutritionalInfo(
+                    "Protein",
+                    "${uiState.totalNutrition.protein.toInt()}g",
+                    "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 营养图表
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Nutrition Trends",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    NutritionBarChart(
+                        foodItems = uiState.foodItems,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 食物项目列表
+            if (uiState.foodItems.isNotEmpty()) {
+                Text(
+                    text = "Diet Data",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Column {
+                    uiState.foodItems.forEach { food ->
+                        FoodItem(
+                            food = food,
+                            onDelete = { viewModel.deleteFoodFromFirestore(food) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            } else {
+                // 空状态食物列表
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No food items added yet.",
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 扫描按钮 - 始终可见
             Button(
                 onClick = onScanButtonClick,
                 shape = RoundedCornerShape(16.dp),
@@ -179,6 +206,9 @@ fun FoodDetailsScreen(
         }
     }
 }
+
+// 其他 Composable 保持不变
+
 
 @Composable
 fun NutritionalInfo(label: String, value: String, percentage: String) {

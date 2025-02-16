@@ -45,45 +45,36 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
             }
         },
         update = { chart ->
-            val entries1 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.energy_kcal.toFloat())
-            }
-            val entries2 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.carbohydrates.toFloat())
-            }
-            val entries3 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.fat.toFloat())
-            }
-            val entries4 = foodItems.mapIndexed { index, item ->
-                BarEntry(index.toFloat(), item.proteins.toFloat())
+            // 定义一个颜色数组，每个食物使用不同的颜色
+            val colorPalette = listOf(
+                AndroidColor.parseColor("#FF4CAF50"),  // 绿色
+                AndroidColor.parseColor("#FF2196F3"),  // 蓝色
+                AndroidColor.parseColor("#FFFF9800"),  // 橙色
+                AndroidColor.parseColor("#FFF44336"),  // 红色
+                AndroidColor.parseColor("#FF9C27B0"),  // 紫色
+                AndroidColor.parseColor("#FF009688"),  // 青色
+                AndroidColor.parseColor("#FFFF5722"),  // 深橙色
+                AndroidColor.parseColor("#FF795548")   // 棕色
+            )
+
+            val sugarEntries = foodItems.mapIndexed { index, item ->
+                BarEntry(index.toFloat(), item.sugars.toFloat())
             }
 
-            val set1 = BarDataSet(entries1, "Calories").apply {
-                color = AndroidColor.parseColor("#4CAF50")
-            }
-            val set2 = BarDataSet(entries2, "Carbs").apply {
-                color = AndroidColor.parseColor("#2196F3")
-            }
-            val set3 = BarDataSet(entries3, "Fat").apply {
-                color = AndroidColor.parseColor("#FF9800")
-            }
-            val set4 = BarDataSet(entries4, "Protein").apply {
-                color = AndroidColor.parseColor("#F44336")
+            val sugarSet = BarDataSet(sugarEntries, "Sugars").apply {
+                // 为每个 Bar 设置不同的颜色
+                colors = colorPalette.take(foodItems.size)
             }
 
-            val groupSpace = 0.4f
-            val barSpace = 0.02f
-            val barWidth = 0.2f
-
-            val barData = BarData(set1, set2, set3, set4).apply {
-                this.barWidth = barWidth
-            }
+            val barData = BarData(sugarSet)
+            barData.barWidth = 0.6f
 
             chart.data = barData
-            chart.groupBars(0f, groupSpace, barSpace)
 
             chart.xAxis.valueFormatter = IndexAxisValueFormatter(
-                foodItems.mapIndexed { index, _ -> "Meal ${index + 1}" }
+                foodItems.mapIndexed { index, food ->
+                    food.product_name.ifEmpty { "Meal ${index + 1}" }
+                }
             )
 
             chart.invalidate()

@@ -5,8 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,16 +21,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
+import com.example.finalproject.viewmodel.FoodDetailsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    viewModel: FoodDetailsViewModel,
     onNavigateToFoodDetails: () -> Unit,
     onNavigateToMoodDetails: () -> Unit,
     onNavigateToWeight: () -> Unit,
     onNavigateToData: () -> Unit,
     onNavigateToPersonal: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -85,65 +91,29 @@ fun HomeScreen(
                 }
             }
 
-            // Calorie Progress Card
+            // 总能量卡片 (从 FoodDetailsScreen 复制)
             Card(
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(24.dp)
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "1739cal\n2925 kcal",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        text = "${uiState.totalNutrition.energy.toInt()} kcal",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "134",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Total Carbohydrates",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                        LinearProgressIndicator(
-                            progress = 0.28f,
-                            modifier = Modifier.width(100.dp),
-                            color = Color(0xFFE57373)
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "94",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Protein",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                        LinearProgressIndicator(
-                            progress = 0.81f,
-                            modifier = Modifier.width(100.dp),
-                            color = Color(0xFFFF7043)
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${uiState.foodItems.size} Meals",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
@@ -173,28 +143,32 @@ fun HomeScreen(
                     )
                 }
 
-                // Food Items List
-                FoodItem(
-                    name = "Hot Dog",
-                    servings = "1 serving",
-                    calories = "152kcal",
-                    nutrients = listOf("0g", "5g", "13g")
-                )
-                FoodItem(
-                    name = "Donut",
-                    servings = "1 serving",
-                    calories = "170kcal",
-                    nutrients = listOf("13g", "5g", "8g")
-                )
-                FoodItem(
-                    name = "Cake",
-                    servings = "1 serving",
-                    calories = "253kcal",
-                    nutrients = listOf("253g", "39g", "88g")
-                )
+                // 食物项目列表 (从 FoodDetailsScreen 复制)
+                if (uiState.foodItems.isNotEmpty()) {
+                    uiState.foodItems.forEach { food ->
+                        FoodItem(
+                            food = food,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No food items added yet.",
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
             }
 
-            // Mood Section
+            // Mood Section remains the same
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,10 +216,7 @@ fun HomeScreen(
 
 @Composable
 private fun FoodItem(
-    name: String,
-    servings: String,
-    calories: String,
-    nutrients: List<String>
+    food: com.example.finalproject.utils.FoodResponse,
 ) {
     Row(
         modifier = Modifier
@@ -255,13 +226,14 @@ private fun FoodItem(
     ) {
         Image(
             painter = painterResource(
-                id = when (name) {
+                id = when (food.product_name) {
                     "Hot Dog" -> R.drawable.ic_hotdog
                     "Donut" -> R.drawable.ic_donut
-                    else -> R.drawable.ic_cake
+                    "Cake" -> R.drawable.ic_cake
+                    else -> R.drawable.ic_food_default // 假设你有一个默认的食物图标
                 }
             ),
-            contentDescription = name,
+            contentDescription = food.product_name,
             modifier = Modifier.size(40.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -270,18 +242,41 @@ private fun FoodItem(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = name, fontSize = 14.sp)
-                Text(text = servings, fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    text = food.product_name.ifEmpty { "Unknown Food" },
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = "100g",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(text = calories, fontSize = 12.sp, color = Color(0xFF4CAF50))
-                nutrients.forEach { nutrient ->
-                    Text(text = nutrient, fontSize = 12.sp, color = Color.Gray)
-                }
+                Text(
+                    text = "${food.energy_kcal.toInt()}kcal",
+                    fontSize = 12.sp,
+                    color = Color(0xFF4CAF50)
+                )
+                Text(
+                    text = "${food.carbohydrates.toInt()}g",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "${food.fat.toInt()}g",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "${food.proteins.toInt()}g",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
             }
         }
     }

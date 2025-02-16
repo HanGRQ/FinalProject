@@ -7,7 +7,9 @@ import com.example.finalproject.utils.FoodResponse
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class TotalNutrition(
     val energy: Double = 0.0,
@@ -27,45 +29,120 @@ class FoodDetailsViewModel : ViewModel() {
     val uiState: StateFlow<UiState> = _uiState
 
     fun fetchFoodDetailsFromFirestore(barcode: String) {
-        val formattedBarcode = barcode.padStart(13, '0')
-        Log.d("Firestore", "Querying barcode: $formattedBarcode")
+        viewModelScope.launch {
+            try {
+                Log.d("FoodDetailsViewModel", "Fetching food details for barcode: $barcode")
 
-        db.collection("foods")
-            .whereEqualTo("barcode", formattedBarcode)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val foodList = documents.mapNotNull { it.toObject(FoodResponse::class.java) }
-                    _uiState.value = UiState(foodList, calculateTotalNutrition(foodList))
-                    Log.d("Firestore", "Successfully fetched food items")
+                val docSnapshot = db.collection("scanned_foods")
+                    .document(barcode)
+                    .get()
+                    .await()
+
+                if (docSnapshot.exists()) {
+                    val food = docSnapshot.toObject(FoodResponse::class.java)
+                    Log.d("FoodDetailsViewModel", "Found food: $food")
+
+                    food?.let {
+                        val foodList = listOf(it)
+                        _uiState.value = UiState(
+                            foodItems = foodList,
+                            totalNutrition = calculateTotalNutrition(foodList)
+                        )
+                    }
                 } else {
-                    Log.d("Firestore", "No food items found for barcode: $formattedBarcode")
+                    Log.d("FoodDetailsViewModel", "No food found for barcode: $barcode")
+                    _uiState.value = UiState()
+                }
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error fetching food details", e)
+                _uiState.value = UiState()
+            }
+        }
+    }
+
+    fun addCurrentFoodToMainList() {
+        viewModelScope.launch {
+            val currentFood = _uiState.value.foodItems.firstOrNull()
+            currentFood?.let { food ->
+                try {
+                    // 先检查是否已经存在于 diet_foods 集合
+                    val existingDoc = db.collection("diet_foods")
+                        .whereEqualTo("barcode", food.barcode)
+                        .get()
+                        .await()
+
+                    if (existingDoc.isEmpty) {
+                        // 如果不存在，添加到 diet_foods 集合
+                        db.collection("diet_foods")
+                            .document(food.barcode)
+                            .set(food)
+                            .await()
+
+                        Log.d("FoodDetailsViewModel", "Added food to diet: ${food.product_name}")
+                    }
+
+                    // 重新加载所有 diet_foods
+                    loadAllDietFoods()
+                } catch (e: Exception) {
+                    Log.e("FoodDetailsViewModel", "Error adding food to diet", e)
                 }
             }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Error fetching food items", e)
-            }
+        }
     }
 
     fun deleteFoodFromFirestore(food: FoodResponse) {
-        val formattedBarcode = food.barcode.padStart(13, '0')
-        db.collection("foods").document(formattedBarcode)
-            .delete()
-            .addOnSuccessListener {
-                Log.d("Firestore", "✅ 已删除食品: ${food.product_name}")
-                val updatedList = _uiState.value.foodItems.filter { it.barcode != formattedBarcode }
-                _uiState.value = UiState(updatedList, calculateTotalNutrition(updatedList))
+        viewModelScope.launch {
+            try {
+                db.collection("diet_foods")
+                    .document(food.barcode)
+                    .delete()
+                    .await()
+
+                Log.d("FoodDetailsViewModel", "Successfully deleted food: ${food.product_name}")
+
+                // 重新加载所有 diet_foods
+                loadAllDietFoods()
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error deleting food", e)
             }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "❌ 删除失败: ${e.message}")
+        }
+    }
+
+    // 在初始化时加载所有已添加的食物
+    init {
+        loadAllDietFoods()
+    }
+
+    private fun loadAllDietFoods() {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = db.collection("diet_foods")
+                    .get()
+                    .await()
+
+                val dietFoods = querySnapshot.toObjects(FoodResponse::class.java)
+
+                if (dietFoods.isNotEmpty()) {
+                    _uiState.value = UiState(
+                        foodItems = dietFoods,
+                        totalNutrition = calculateTotalNutrition(dietFoods)
+                    )
+                } else {
+                    _uiState.value = UiState()
+                }
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error loading diet foods", e)
+                _uiState.value = UiState()
             }
+        }
     }
 
     private fun calculateTotalNutrition(foodItems: List<FoodResponse>): TotalNutrition {
-        val energy = foodItems.sumOf { it.energy_kcal ?: 0.0 }
-        val carbs = foodItems.sumOf { it.carbohydrates ?: 0.0 }
-        val fat = foodItems.sumOf { it.fat ?: 0.0 }
-        val protein = foodItems.sumOf { it.proteins ?: 0.0 }
-        return TotalNutrition(energy, carbs, fat, protein)
+        return TotalNutrition(
+            energy = foodItems.sumOf { it.energy_kcal },
+            carbs = foodItems.sumOf { it.carbohydrates },
+            fat = foodItems.sumOf { it.fat },
+            protein = foodItems.sumOf { it.proteins }
+        )
     }
 }
