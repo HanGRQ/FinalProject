@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,9 +12,12 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalproject.ui.screens.*
+import com.example.finalproject.viewmodel.DataViewModel
+import com.example.finalproject.viewmodel.EmotionViewModel
 import com.example.finalproject.viewmodel.ScanViewModel
 import com.example.finalproject.viewmodel.UserInfoViewModel
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
+import com.example.finalproject.viewmodel.WeightViewModel
 
 private const val TAG = "AppNavGraph"
 
@@ -89,7 +93,9 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable("weight") {
+            val viewModel: WeightViewModel = viewModel() // 或 hiltViewModel()，取决于您使用的依赖注入方式
             WeightScreen(
+                viewModel = viewModel,
                 onNavigateTo = { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
@@ -99,7 +105,9 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable("data") {
+            val viewModel: DataViewModel = viewModel() // 或 hiltViewModel()，取决于您使用的依赖注入方式
             DataScreen(
+                viewModel = viewModel,
                 onNavigateTo = { route ->
                     navController.navigate(route) {
                         launchSingleTop = true
@@ -107,6 +115,7 @@ fun AppNavGraph(navController: NavHostController) {
                 }
             )
         }
+
 
         composable("personal") {
             PersonalScreen(
@@ -174,10 +183,17 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable("mood_details") {
-            EmotionDetailsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onAddClick = { navController.navigate("add_emotion") }
+            val viewModel: EmotionViewModel = viewModel() // 或 hiltViewModel()，取决于您的依赖注入方式
+            MoodDetailsScreen(
+                viewModel = viewModel,
+                onNavigateTo = { route ->
+                    navController.navigate(route) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
+
+
     }
 }

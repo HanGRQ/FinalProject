@@ -1,28 +1,72 @@
 package com.example.finalproject.ui.screens
 
+import android.app.DatePickerDialog
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
+import com.example.finalproject.viewmodel.WeightViewModel
+import com.example.finalproject.viewmodel.WeightEntry
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeightScreen(
+    viewModel: WeightViewModel,
     onNavigateTo: (String) -> Unit
 ) {
+    val weightState by viewModel.weightState.collectAsState()
+    val bmiResult by viewModel.bmiResult.collectAsState()
+    var showWeightDialog by remember { mutableStateOf(false) }
+    var showBMIDialog by remember { mutableStateOf(false) }
+    var showTargetWeightDialog by remember { mutableStateOf(false) }
+    var selectedDate by remember { mutableStateOf("") }
+    var weightInput by remember { mutableStateOf("") }
+    var heightInput by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+
+    val datePickerDialog = remember {
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val selectedDateString = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                selectedDate = selectedDateString
+            },
+            Calendar.getInstance().get(Calendar.YEAR),
+            Calendar.getInstance().get(Calendar.MONTH),
+            Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+        )
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -37,7 +81,6 @@ fun WeightScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // Header with profile and date
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -50,19 +93,15 @@ fun WeightScreen(
                         .size(40.dp)
                         .clip(CircleShape)
                 )
-                Text(
-                    text = "2024-12-01",
-                    color = Color.Gray
-                )
                 IconButton(
-                    onClick = { /* Handle message */ },
+                    onClick = { showWeightDialog = true },
                     modifier = Modifier
                         .size(40.dp)
                         .background(Color(0xFF00BFA5), CircleShape)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = "Calendar",
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Weight",
                         tint = Color.White
                     )
                 }
@@ -78,58 +117,22 @@ fun WeightScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Weight Graph Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    // Weight points
-                    Text(
-                        text = "65kg",
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .background(
-                                Color(0xFF1B3434),
-                                RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color.White
-                    )
-
-                    Text(
-                        text = "60kg",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .background(
-                                Color(0xFF1B3434),
-                                RoundedCornerShape(12.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color.White
-                    )
-                }
-            }
+            WeightLineChart(weightState.weightEntries)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Weight Stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text(
-                        text = "72%",
+                        text = "${weightState.targetWeight} kg",
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
+                            showTargetWeightDialog = true
+                        }
                     )
                     Text(
                         text = "Target Weight",
@@ -144,7 +147,7 @@ fun WeightScreen(
                 }
                 Column {
                     Text(
-                        text = "65%",
+                        text = "${weightState.currentWeight} kg",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -163,12 +166,17 @@ fun WeightScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // BMI Section
-            Text(
-                text = "Body Mass Index (BMI)",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Button(
+                onClick = { showBMIDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFAFE1AF)
+                )
+            ) {
+                Text("Calculate BMI")
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -198,7 +206,7 @@ fun WeightScreen(
                             )
                         }
                         Text(
-                            text = "21.2",
+                            text = String.format("%.1f", bmiResult),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -229,5 +237,178 @@ fun WeightScreen(
                 }
             }
         }
+
+        if (showWeightDialog) {
+            Dialog(onDismissRequest = { showWeightDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Add Weight Entry", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(onClick = { datePickerDialog.show() }) {
+                            Text(selectedDate.ifEmpty { "Select Date" })
+                        }
+
+                        TextField(
+                            value = weightInput,
+                            onValueChange = { weightInput = it },
+                            label = { Text("Weight (kg)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                val weight = weightInput.toDoubleOrNull()
+                                if (selectedDate.isNotEmpty() && weight != null) {
+                                    viewModel.addWeightEntry(selectedDate, weight)
+                                    showWeightDialog = false
+                                    weightInput = ""
+                                    selectedDate = ""
+                                }
+                            }
+                        ) {
+                            Text("Save")
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showBMIDialog) {
+            Dialog(onDismissRequest = { showBMIDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Calculate BMI", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        TextField(
+                            value = heightInput,
+                            onValueChange = { heightInput = it },
+                            label = { Text("Height (m)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                val height = heightInput.toDoubleOrNull()
+                                if (height != null) {
+                                    viewModel.setHeight(height)
+                                    viewModel.calculateBMI()
+                                    showBMIDialog = false
+                                    heightInput = ""
+                                }
+                            }
+                        ) {
+                            Text("Calculate")
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showTargetWeightDialog) {
+            Dialog(onDismissRequest = { showTargetWeightDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Set Target Weight", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        TextField(
+                            value = weightInput,
+                            onValueChange = { weightInput = it },
+                            label = { Text("Target Weight (kg)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                val targetWeight = weightInput.toDoubleOrNull()
+                                if (targetWeight != null) {
+                                    viewModel.setTargetWeight(targetWeight)
+                                    showTargetWeightDialog = false
+                                    weightInput = ""
+                                }
+                            }
+                        ) {
+                            Text("Save")
+                        }
+                    }
+                }
+            }
+        }
     }
+}
+
+@Composable
+fun WeightLineChart(weightEntries: List<WeightEntry>) {
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        factory = { context ->
+            LineChart(context).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                description.isEnabled = false
+                setDrawGridBackground(false)
+
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+                    setDrawGridLines(false)
+                }
+
+                axisLeft.setDrawGridLines(true)
+                axisRight.isEnabled = false
+            }
+        },
+        update = { chart ->
+            val entries = weightEntries.mapIndexed { index, entry ->
+                Entry(index.toFloat(), entry.weight.toFloat())
+            }
+
+            val dataSet = LineDataSet(entries, "Weight").apply {
+                color = android.graphics.Color.BLUE
+                setCircleColor(android.graphics.Color.BLUE)
+                lineWidth = 2f
+                circleRadius = 4f
+                setDrawValues(true)
+            }
+
+            val lineData = LineData(dataSet)
+            chart.data = lineData
+            chart.invalidate()
+        }
+    )
 }
