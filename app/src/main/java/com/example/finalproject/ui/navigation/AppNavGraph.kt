@@ -58,24 +58,10 @@ fun AppNavGraph(navController: NavHostController) {
         // Login success page
         composable("loginsuccess") {
             LoginSuccessScreen(onNavigateToSetup = {
-                navController.navigate("setup_plan_flow") {
+                navController.navigate("home") {
                     popUpTo("loginsuccess") { inclusive = true }
                 }
             })
-        }
-
-        // Setting up the planning process
-        composable("setup_plan_flow") {
-            val viewModel: UserInfoViewModel = viewModel()
-            SetupPlanFlow(
-                viewModel = viewModel,
-                onFinish = {
-                    navController.navigate("home") {
-                        popUpTo(0) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-            )
         }
 
         // main

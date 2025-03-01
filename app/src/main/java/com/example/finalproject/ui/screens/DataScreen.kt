@@ -1,14 +1,17 @@
 package com.example.finalproject.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +26,6 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.example.finalproject.R
-
 
 @Composable
 fun DataScreen(
@@ -52,56 +54,94 @@ fun DataScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        // ✅ **将 `Column` 替换为 `LazyColumn` 以支持滚动**
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                TabButton(text = "Sugar Analysis", isSelected = selectedTab == 0) { selectedTab = 0 }
-                Spacer(modifier = Modifier.width(8.dp))
-                TabButton(text = "Emotion Analysis", isSelected = selectedTab == 1) { selectedTab = 1 }
+            // **✅ 头部 `Profile Image`**
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile_image),
+                        contentDescription = "Profile",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                Text(
+                    text = "Data Analysis",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // **✅ Tab 切换**
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    TabButton(text = "Sugar Analysis", isSelected = selectedTab == 0) { selectedTab = 0 }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TabButton(text = "Emotion Analysis", isSelected = selectedTab == 1) { selectedTab = 1 }
+                }
+            }
 
             if (selectedTab == 0) {
-                LineChartView(dietFoodsList)
+                // **✅ Sugar Analysis**
+                item { LineChartView(dietFoodsList) }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        NutritionStat("Total Energy", "${totalEnergyKcal.toInt()} kcal", totalEnergyKcal / 2000, Color(0xFFE57373))
-                        NutritionStat("Total Sugars", "${totalSugars.toInt()} g", totalSugars / 100, Color(0xFFFFB74D))
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            NutritionStat("Total Energy", "${totalEnergyKcal.toInt()} kcal", totalEnergyKcal / 2000, Color(0xFFE57373))
+                            NutritionStat("Total Sugars", "${totalSugars.toInt()} g", totalSugars / 100, Color(0xFFFFB74D))
+                        }
                     }
                 }
             } else if (selectedTab == 1) {
-                EmotionChartView(emotionData)
+                // **✅ Emotion Analysis**
+                item { EmotionChartView(emotionData) }
             }
 
-            Text(text = "History", fontSize = 18.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(vertical = 8.dp))
+            item {
+                Text(
+                    text = "History",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
-            LazyColumn {
-                if (selectedTab == 0) {
-                    items(scannedFoodsList) { food ->
-                        HistoryItem(name = food.product_name, energy = food.energy_kcal, sugars = food.sugars)
-                    }
-                } else if (selectedTab == 1) {
-                    items(emotionData.entries.toList()) { (date, mood) ->
-                        EmotionHistoryItemData(date = date, mood = mood)
-                    }
+            // **✅ `LazyColumn` 内部 `items()` 避免 `历史记录` 被 `LazyColumn` 之外的 `Column` 影响**
+            if (selectedTab == 0) {
+                items(scannedFoodsList) { food ->
+                    HistoryItem(name = food.product_name, energy = food.energy_kcal, sugars = food.sugars)
+                }
+            } else if (selectedTab == 1) {
+                items(emotionData.entries.toList()) { (date, mood) ->
+                    EmotionHistoryItemData(date = date, mood = mood)
                 }
             }
         }
     }
 }
+
 
 // **Sugar Analysis 折线图**
 @Composable
