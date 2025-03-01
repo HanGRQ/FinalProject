@@ -39,6 +39,7 @@ private const val TAG = "ScanScreen"
 
 @Composable
 fun ScanScreen(
+    userId: String,
     navController: NavController,
     viewModel: ScanViewModel,
     onScanComplete: (String) -> Unit
@@ -75,8 +76,8 @@ fun ScanScreen(
                 try {
                     Log.d(TAG, "Processing scan result: $barcode")
                     onScanComplete(barcode)
-                    delay(100)
-                    navController.navigate("food_details/$barcode") {
+                    // ✅ 传递 userId，并确保跳转到用户专属的 food_detail 页面
+                    navController.navigate("food_detail/$userId/$barcode") {
                         launchSingleTop = true
                     }
                 } catch (e: Exception) {
@@ -97,7 +98,7 @@ fun ScanScreen(
         CameraPreview { detectedBarcode ->
             if (!isProcessingBarcode) {
                 Log.d(TAG, "Detected barcode: $detectedBarcode")
-                viewModel.onBarcodeDetected(detectedBarcode)
+                viewModel.onBarcodeDetected(userId, detectedBarcode) // ✅ 传递 userId
                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
             }
@@ -198,6 +199,7 @@ fun ScanScreen(
         }
     }
 }
+
 
 // Original CameraPreview composable stays the same
 

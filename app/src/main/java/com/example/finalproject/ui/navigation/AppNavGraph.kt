@@ -2,33 +2,28 @@ package com.example.finalproject.ui.navigation
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.finalproject.ui.screens.*
-import com.example.finalproject.viewmodel.DataViewModel
-import com.example.finalproject.viewmodel.EmotionViewModel
-import com.example.finalproject.viewmodel.ScanViewModel
-import com.example.finalproject.viewmodel.UserInfoViewModel
-import com.example.finalproject.viewmodel.FoodDetailsViewModel
-import com.example.finalproject.viewmodel.WeightViewModel
-
-private const val TAG = "AppNavGraph"
+import com.example.finalproject.viewmodel.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    val scanViewModel: ScanViewModel = viewModel()
-    val sharedViewModel: FoodDetailsViewModel = remember { FoodDetailsViewModel() }
+    val userInfoViewModel: UserInfoViewModel = hiltViewModel()
+    val scanViewModel: ScanViewModel = hiltViewModel()
+    val sharedViewModel: FoodDetailsViewModel = hiltViewModel()
+
+    val userId by userInfoViewModel.userId.collectAsState()
 
     NavHost(navController = navController, startDestination = "splash") {
-        // Startup Page
         composable("splash") {
             SplashScreen(onFinish = {
                 navController.navigate("onboarding") {
@@ -37,7 +32,6 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // Guide page
         composable("onboarding") {
             OnboardingScreen(onFinish = {
                 navController.navigate("login") {
@@ -46,140 +40,142 @@ fun AppNavGraph(navController: NavHostController) {
             })
         }
 
-        // Login Page
         composable("login") {
-            LoginScreen(onLoginSuccess = {
-                navController.navigate("loginsuccess") {
-                    popUpTo("login") { inclusive = true }
+            LoginScreen(
+                onLoginSuccess = { userId ->
+                    userInfoViewModel.setUserId(userId)
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToRegister = {
+                    navController.navigate("register")
                 }
+            )
+        }
+
+        composable("register") {
+            RegisterScreen(onRegisterSuccess = {
+                navController.popBackStack()
             })
         }
 
-        // Login success page
-        composable("loginsuccess") {
-            LoginSuccessScreen(onNavigateToSetup = {
-                navController.navigate("home") {
-                    popUpTo("loginsuccess") { inclusive = true }
-                }
-            })
-        }
-
-        // main
+        /** ✅ HomeScreen 连接 FoodDetailsScreen 和 MoodDetailsScreen */
         composable("home") {
-            val viewModel = viewModel<FoodDetailsViewModel>() // 如果使用 androidx.lifecycle:lifecycle-viewmodel-compose
+            if (userId == null) return@composable
 
             HomeScreen(
-                viewModel = viewModel, // 添加 viewModel 参数
-                onNavigateToFoodDetails = { navController.navigate("food_details") },
-                onNavigateToMoodDetails = { navController.navigate("mood_details") },
+                userId = userId!!,
+                viewModel = hiltViewModel(),
+                onNavigateToFoodDetails = { navController.navigate("food_details/$userId") },
+                onNavigateToMoodDetails = { navController.navigate("mood_details/$userId") },
                 onNavigateToWeight = { navController.navigate("weight") },
                 onNavigateToData = { navController.navigate("data") },
                 onNavigateToPersonal = { navController.navigate("personal") }
             )
         }
 
-        composable("weight") {
-            val viewModel: WeightViewModel = viewModel() // 或 hiltViewModel()，取决于您使用的依赖注入方式
-            WeightScreen(
-                viewModel = viewModel,
-                onNavigateTo = { route ->
-                    navController.navigate(route) {
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
-
-        composable("data") {
-            val viewModel: DataViewModel = viewModel() // 或 hiltViewModel()，取决于您使用的依赖注入方式
-            DataScreen(
-                viewModel = viewModel,
-                onNavigateTo = { route ->
-                    navController.navigate(route) {
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
-
-
-        composable("personal") {
-            PersonalScreen(
-                onNavigateTo = { route ->
-                    navController.navigate(route) {
-                        launchSingleTop = true
-                    }
-                }
-            )
-        }
-
-        composable("personal_details") {
-            PersonalDetailsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("settings") {
-            SettingsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable("scan") {
-            Log.d(TAG, "scan page")
-            ScanScreen(
-                navController = navController,
-                viewModel = scanViewModel,
-                onScanComplete = { barcode ->
-                    sharedViewModel.fetchFoodDetailsFromFirestore(barcode)
-                    navController.navigate("food_details/$barcode")
-                }
-            )
-        }
-
+        /** ✅ FoodDetailsScreen 连接 ScanScreen */
         composable(
-            route = "food_details/{barcode}",
-            arguments = listOf(navArgument("barcode") {
-                type = NavType.StringType
-                nullable = false
-            })
+            route = "food_details/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val barcode = backStackEntry.arguments?.getString("barcode")
-            if (barcode != null) {
-                Log.d(TAG, "Navigate to food details page, barcode: $barcode")
-                FoodDetailScreen(
-                    navController = navController,
-                    barcode = barcode,
-                    viewModel = sharedViewModel
-                )
-            }
-        }
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            val viewModel: FoodDetailsViewModel = hiltViewModel()
 
-        composable("food_details") {
-            Log.d(TAG, "Navigate to food list page")
             FoodDetailsScreen(
-                viewModel = sharedViewModel,
-                onScanButtonClick = { navController.navigate("scan") },
+                userId = userId,
+                viewModel = viewModel,
+                onScanButtonClick = { navController.navigate("scan/$userId") }, // ✅ 传递 userId
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        composable("mood_details") {
-            val viewModel: EmotionViewModel = viewModel() // 或 hiltViewModel()，取决于您的依赖注入方式
-            MoodDetailsScreen(
-                viewModel = viewModel,
-                onNavigateTo = { route ->
-                    navController.navigate(route) {
-                        launchSingleTop = true
+        /** ScanScreen 连接 FoodDetailScreen（仅在成功扫描时） */
+        composable(
+            route = "scan/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            val scanViewModel: ScanViewModel = hiltViewModel()
+
+            ScanScreen(
+                userId = userId,
+                navController = navController,
+                viewModel = scanViewModel
+            ) { barcode ->
+                if (barcode.isNotEmpty()) {
+                    navController.navigate("food_detail/$userId/$barcode") {
+                        popUpTo("scan/$userId") { inclusive = true } // ✅ 让 ScanScreen 退出
                     }
                 }
+            }
+        }
+
+
+        composable(
+            "food_detail/{userId}/{barcode}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("barcode") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            val barcode = backStackEntry.arguments?.getString("barcode") ?: return@composable
+            Log.d("FoodDetailScreen", "Received barcode: $barcode")  // 🔍 确保 barcode 传入
+            val viewModel: FoodDetailsViewModel = hiltViewModel()
+
+            FoodDetailScreen(
+                userId = userId,
+                barcode = barcode,
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
 
+        /** ✅ MoodDetailsScreen */
+        composable(
+            "mood_details/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+            val viewModel: EmotionViewModel = hiltViewModel()
+
+            MoodDetailsScreen(
+                viewModel = viewModel,
+                userId = userId,
+                onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } }
+            )
+        }
+
+        /** ✅ DataScreen */
+        composable("data") {
+            if (userId == null) return@composable
+            val viewModel: DataViewModel = hiltViewModel()
+
+            DataScreen(
+                userId = userId!!,
+                viewModel = viewModel,
+                onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } }
+            )
+        }
+
+        /** ✅ WeightScreen */
+        composable("weight") {
+            if (userId == null) return@composable
+            val viewModel: WeightViewModel = hiltViewModel()
+            WeightScreen(viewModel = viewModel, userId = userId!!) { route ->
+                navController.navigate(route) { launchSingleTop = true }
+            }
+        }
+
+        /** ✅ PersonalScreen */
+        composable("personal") {
+            if (userId == null) return@composable
+            PersonalScreen(userId = userId!!) { route ->
+                navController.navigate(route) { launchSingleTop = true }
+            }
+        }
     }
 }

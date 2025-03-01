@@ -24,6 +24,7 @@ import com.example.finalproject.ui.components.BottomNavigationBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalScreen(
+    userId: String, // ✅ 接收 userId
     onNavigateTo: (String) -> Unit
 ) {
     Scaffold(
@@ -55,7 +56,7 @@ fun PersonalScreen(
 
             // Name
             Text(
-                text = "Hello World",
+                text = "Hello World", // Replace with user's name if available
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -67,11 +68,11 @@ fun PersonalScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("23", color = Color.Gray)
+                Text("23", color = Color.Gray) // Example Age
                 Text(" · ", color = Color.Gray)
-                Text("175cm", color = Color.Gray)
+                Text("175cm", color = Color.Gray) // Example Height
                 Text(" · ", color = Color.Gray)
-                Text("65kg", color = Color.Gray)
+                Text("65kg", color = Color.Gray) // Example Weight
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -121,4 +122,3 @@ fun PersonalScreen(
         }
     }
 }
-

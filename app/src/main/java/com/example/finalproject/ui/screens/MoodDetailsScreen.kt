@@ -1,5 +1,6 @@
 package com.example.finalproject.ui.screens
 
+import android.app.DatePickerDialog
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -22,11 +23,11 @@ import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.viewmodel.EmotionViewModel
 import java.util.Calendar
-import android.app.DatePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoodDetailsScreen(
+    userId: String,  // ✅ 传递 userId
     viewModel: EmotionViewModel,
     onNavigateTo: (String) -> Unit
 ) {
@@ -35,10 +36,10 @@ fun MoodDetailsScreen(
     val allEmotions by viewModel.allEmotions.collectAsState()
 
     val context = LocalContext.current
-    var showDialog by remember { mutableStateOf(false) } // ✅ 控制弹窗的 `State`
+    var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchAllEmotions()
+    LaunchedEffect(userId) {
+        viewModel.fetchAllEmotions(userId) // ✅ 获取用户情绪历史
     }
 
     Scaffold(
@@ -56,7 +57,7 @@ fun MoodDetailsScreen(
                 actions = {
                     IconButton(onClick = {
                         Log.d("MoodDetailsScreen", "Add button clicked")
-                        showDialog = true // ✅ 让弹窗 `Dialog` 显示
+                        showDialog = true
                     }) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -133,14 +134,18 @@ fun MoodDetailsScreen(
 
     if (showDialog) {
         EmotionDialog(
+            userId = userId,  // ✅ 传递 userId
             context = context,
             selectedDate = selectedDate,
-            onDateSelected = { viewModel.updateDate(it) },
-            onMoodSelected = { viewModel.saveEmotionStatus(selectedDate, it) },
+            onDateSelected = { viewModel.updateDate(userId, it) },
+            onMoodSelected = { mood -> viewModel.saveEmotionStatus(userId, selectedDate, mood) },
             onDismiss = { showDialog = false }
         )
     }
 }
+
+
+
 
 // **更新历史记录 Card，使 Icon 更小**
 @Composable
@@ -177,6 +182,7 @@ fun EmotionHistoryItem(date: String, mood: String) {
 
 @Composable
 fun EmotionDialog(
+    userId: String,
     context: Context,
     selectedDate: String,
     onDateSelected: (String) -> Unit,

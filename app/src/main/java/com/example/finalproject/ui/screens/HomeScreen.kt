@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,9 +20,11 @@ import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
+import com.example.finalproject.viewmodel.UserInfoViewModel
 
 @Composable
 fun HomeScreen(
+    userId: String, // ✅ 添加 userId
     viewModel: FoodDetailsViewModel,
     onNavigateToFoodDetails: () -> Unit,
     onNavigateToMoodDetails: () -> Unit,
@@ -33,6 +33,11 @@ fun HomeScreen(
     onNavigateToPersonal: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(userId) {
+        viewModel.loadAllDietFoods(userId) // ✅ 确保 ViewModel 加载数据
+    }
+
 
     Scaffold(
         bottomBar = {
@@ -54,7 +59,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Header section
+            // ✅ 个人信息区域，显示 userId
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -71,7 +76,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Hello, Hello World",
+                        text = "Hello, User $userId", // ✅ 显示 userId
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -91,7 +96,7 @@ fun HomeScreen(
                 }
             }
 
-            // 总能量卡片 (从 FoodDetailsScreen 复制)
+            // ✅ 显示用户的饮食数据
             Card(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
@@ -117,7 +122,7 @@ fun HomeScreen(
                 }
             }
 
-            // Food Data Section
+            // ✅ 食物数据
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -143,12 +148,9 @@ fun HomeScreen(
                     )
                 }
 
-                // 食物项目列表 (从 FoodDetailsScreen 复制)
                 if (uiState.foodItems.isNotEmpty()) {
                     uiState.foodItems.forEach { food ->
-                        FoodItem(
-                            food = food,
-                        )
+                        FoodItem(food = food)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 } else {
@@ -168,7 +170,7 @@ fun HomeScreen(
                 }
             }
 
-            // Mood Section remains the same
+            // ✅ 心情状态
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -230,7 +232,7 @@ private fun FoodItem(
                     "Hot Dog" -> R.drawable.ic_hotdog
                     "Donut" -> R.drawable.ic_donut
                     "Cake" -> R.drawable.ic_cake
-                    else -> R.drawable.ic_food_default // 假设你有一个默认的食物图标
+                    else -> R.drawable.ic_food_default
                 }
             ),
             contentDescription = food.product_name,

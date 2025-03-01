@@ -27,11 +27,16 @@ import com.example.finalproject.utils.FoodResponse
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodDetailsScreen(
+    userId: String,
     viewModel: FoodDetailsViewModel,
     onScanButtonClick: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(userId) {
+        viewModel.loadAllDietFoods(userId)
+    }
 
     Scaffold(
         topBar = {
@@ -95,26 +100,10 @@ fun FoodDetailsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                NutritionalInfo(
-                    "Total Energy",
-                    "${uiState.totalNutrition.energy.toInt()}",
-                    "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Carbohydrates",
-                    "${uiState.totalNutrition.carbs.toInt()}g",
-                    "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Fat",
-                    "${uiState.totalNutrition.fat.toInt()}g",
-                    "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%"
-                )
-                NutritionalInfo(
-                    "Protein",
-                    "${uiState.totalNutrition.protein.toInt()}g",
-                    "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%"
-                )
+                NutritionalInfo("Total Energy", "${uiState.totalNutrition.energy.toInt()}", "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%")
+                NutritionalInfo("Carbohydrates", "${uiState.totalNutrition.carbs.toInt()}g", "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%")
+                NutritionalInfo("Fat", "${uiState.totalNutrition.fat.toInt()}g", "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%")
+                NutritionalInfo("Protein", "${uiState.totalNutrition.protein.toInt()}g", "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -161,7 +150,7 @@ fun FoodDetailsScreen(
                     uiState.foodItems.forEach { food ->
                         FoodItem(
                             food = food,
-                            onDelete = { viewModel.deleteFoodFromFirestore(food) }
+                            onDelete = { viewModel.deleteFoodFromFirestore(userId, food) } // ✅ 传递 userId
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
@@ -207,7 +196,6 @@ fun FoodDetailsScreen(
     }
 }
 
-// 其他 Composable 保持不变
 
 
 @Composable

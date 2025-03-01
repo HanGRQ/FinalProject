@@ -26,9 +26,12 @@ class DataViewModel : ViewModel() {
     private val _emotionData = MutableStateFlow<Map<String, String>>(emptyMap())
     val emotionData: StateFlow<Map<String, String>> = _emotionData
 
-    fun fetchDietFoods() {
+    /**
+     * ✅ **获取用户的 `diet_foods` 数据**
+     */
+    fun fetchDietFoods(userId: String) {
         viewModelScope.launch {
-            db.collection("diet_foods")
+            db.collection("users").document(userId).collection("diet_foods") // ✅ 读取该用户数据
                 .get()
                 .addOnSuccessListener { result ->
                     val foods = result.toObjects(FoodResponse::class.java)
@@ -38,9 +41,12 @@ class DataViewModel : ViewModel() {
         }
     }
 
-    fun fetchScannedFoods() {
+    /**
+     * ✅ **获取用户的 `scanned_foods` 数据**
+     */
+    fun fetchScannedFoods(userId: String) {
         viewModelScope.launch {
-            db.collection("scanned_foods")
+            db.collection("users").document(userId).collection("scanned_foods") // ✅ 读取该用户数据
                 .get()
                 .addOnSuccessListener { result ->
                     val foods = result.toObjects(FoodResponse::class.java)
@@ -50,9 +56,12 @@ class DataViewModel : ViewModel() {
         }
     }
 
-    fun fetchEmotionData() {
+    /**
+     * ✅ **获取用户的 `emotion_status` 数据**
+     */
+    fun fetchEmotionData(userId: String) {
         viewModelScope.launch {
-            db.collection("emotion_status")
+            db.collection("users").document(userId).collection("emotion_status") // ✅ 读取该用户数据
                 .get()
                 .addOnSuccessListener { result ->
                     val emotions = result.documents.associate { doc ->
@@ -65,6 +74,9 @@ class DataViewModel : ViewModel() {
         }
     }
 
+    /**
+     * ✅ **计算总能量和总糖分**
+     */
     private fun calculateTotals() {
         val allFoods = _dietFoods.value + _scannedFoods.value
         var totalEnergy = 0.0

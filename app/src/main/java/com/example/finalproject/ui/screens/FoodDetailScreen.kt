@@ -19,14 +19,15 @@ import com.example.finalproject.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodDetailScreen(
-    navController: NavController,
+    userId: String,
     barcode: String,
-    viewModel: FoodDetailsViewModel
+    viewModel: FoodDetailsViewModel,
+    onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(barcode) {
-        viewModel.fetchFoodDetailsFromFirestore(barcode)
+        viewModel.fetchFoodDetailsFromFirestore(userId, barcode)
     }
 
     Scaffold(
@@ -34,13 +35,13 @@ fun FoodDetailScreen(
             TopAppBar(
                 title = { Text("Food Detail") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = {
-                        viewModel.addCurrentFoodToMainList()
+                        viewModel.addCurrentFoodToMainList(userId) // ✅ 传递 userId 添加食品
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_add),
@@ -143,6 +144,7 @@ fun FoodDetailScreen(
         }
     }
 }
+
 
 @Composable
 private fun NutrientInfo(

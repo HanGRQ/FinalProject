@@ -29,6 +29,7 @@ import com.example.finalproject.R
 
 @Composable
 fun DataScreen(
+    userId: String,
     onNavigateTo: (String) -> Unit,
     viewModel: DataViewModel
 ) {
@@ -40,10 +41,10 @@ fun DataScreen(
     val totalEnergyKcal by viewModel.totalEnergyKcal.collectAsState(initial = 0.0)
     val totalSugars by viewModel.totalSugars.collectAsState(initial = 0.0)
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchDietFoods()
-        viewModel.fetchScannedFoods()
-        viewModel.fetchEmotionData()
+    LaunchedEffect(userId) {
+        viewModel.fetchDietFoods(userId)
+        viewModel.fetchScannedFoods(userId)
+        viewModel.fetchEmotionData(userId)
     }
 
     Scaffold(
@@ -54,7 +55,6 @@ fun DataScreen(
             )
         }
     ) { innerPadding ->
-        // ✅ **将 `Column` 替换为 `LazyColumn` 以支持滚动**
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -62,7 +62,6 @@ fun DataScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // **✅ 头部 `Profile Image`**
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -76,6 +75,11 @@ fun DataScreen(
                             .size(40.dp)
                             .clip(CircleShape)
                     )
+                    Text(
+                        text = "User ID: $userId", // ✅ 显示用户 ID
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
@@ -87,7 +91,6 @@ fun DataScreen(
                 )
             }
 
-            // **✅ Tab 切换**
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -100,7 +103,6 @@ fun DataScreen(
             }
 
             if (selectedTab == 0) {
-                // **✅ Sugar Analysis**
                 item { LineChartView(dietFoodsList) }
 
                 item {
@@ -116,7 +118,6 @@ fun DataScreen(
                     }
                 }
             } else if (selectedTab == 1) {
-                // **✅ Emotion Analysis**
                 item { EmotionChartView(emotionData) }
             }
 
@@ -128,7 +129,6 @@ fun DataScreen(
                 )
             }
 
-            // **✅ `LazyColumn` 内部 `items()` 避免 `历史记录` 被 `LazyColumn` 之外的 `Column` 影响**
             if (selectedTab == 0) {
                 items(scannedFoodsList) { food ->
                     HistoryItem(name = food.product_name, energy = food.energy_kcal, sugars = food.sugars)
@@ -141,6 +141,7 @@ fun DataScreen(
         }
     }
 }
+
 
 
 // **Sugar Analysis 折线图**
@@ -282,4 +283,3 @@ fun NutritionStat(label: String, value: String, progress: Double, color: Color) 
         Text(text = "${(progress * 100).toInt()}%", fontSize = 12.sp, color = Color.Gray)
     }
 }
-

@@ -22,13 +22,14 @@ class EmotionViewModel : ViewModel() {
     private val _allEmotions = MutableStateFlow<List<EmotionRecord>>(emptyList())
     val allEmotions: StateFlow<List<EmotionRecord>> = _allEmotions
 
-    fun updateDate(newDate: String) {
+    fun updateDate(userId: String, newDate: String) {
         _selectedDate.value = newDate
-        fetchEmotionStatus(newDate)
+        fetchEmotionStatus(userId, newDate)
     }
 
-    fun fetchEmotionStatus(date: String) {
-        firestore.collection("emotion_status")
+    fun fetchEmotionStatus(userId: String, date: String) {
+        firestore.collection("users").document(userId)
+            .collection("emotion_status")
             .document(date)
             .get()
             .addOnSuccessListener { document ->
@@ -36,8 +37,9 @@ class EmotionViewModel : ViewModel() {
             }
     }
 
-    fun fetchAllEmotions() {
-        firestore.collection("emotion_status")
+    fun fetchAllEmotions(userId: String) {
+        firestore.collection("users").document(userId)
+            .collection("emotion_status")
             .get()
             .addOnSuccessListener { result ->
                 val emotions = result.documents.mapNotNull { doc ->
@@ -49,20 +51,21 @@ class EmotionViewModel : ViewModel() {
             }
     }
 
-    fun saveEmotionStatus(date: String, mood: String) {
+    fun saveEmotionStatus(userId: String, date: String, mood: String) {
         viewModelScope.launch {
-            firestore.collection("emotion_status")
+            firestore.collection("users").document(userId)
+                .collection("emotion_status")
                 .document(date)
                 .set(mapOf("mood" to mood))
                 .addOnSuccessListener {
                     _moodStatus.value = mood
-                    fetchAllEmotions() // 更新记录
+                    fetchAllEmotions(userId)
+                    fetchEmotionStatus(userId, date)
                 }
         }
     }
 }
 
-// 获取当前日期
 fun getCurrentDate(): String {
     val calendar = Calendar.getInstance()
     return "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH) + 1}-${calendar.get(Calendar.DAY_OF_MONTH)}"

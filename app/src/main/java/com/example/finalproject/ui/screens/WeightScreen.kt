@@ -3,6 +3,7 @@ package com.example.finalproject.ui.screens
 import android.app.DatePickerDialog
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeightScreen(
+    userId: String,  // ✅ 添加 userId
     viewModel: WeightViewModel,
     onNavigateTo: (String) -> Unit
 ) {
@@ -65,6 +67,11 @@ fun WeightScreen(
             Calendar.getInstance().get(Calendar.MONTH),
             Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
         )
+    }
+
+    // ✅ 加载当前用户的体重数据
+    LaunchedEffect(userId) {
+        viewModel.fetchWeightEntries(userId)
     }
 
     Scaffold(
@@ -270,10 +277,12 @@ fun WeightScreen(
                             onClick = {
                                 val weight = weightInput.toDoubleOrNull()
                                 if (selectedDate.isNotEmpty() && weight != null) {
-                                    viewModel.addWeightEntry(selectedDate, weight)
+                                    viewModel.addWeightEntry(userId, selectedDate, weight) // ✅ 传递 userId
                                     showWeightDialog = false
                                     weightInput = ""
                                     selectedDate = ""
+                                } else {
+                                    Toast.makeText(context, "Please enter a valid weight", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         ) {
@@ -312,10 +321,12 @@ fun WeightScreen(
                             onClick = {
                                 val height = heightInput.toDoubleOrNull()
                                 if (height != null) {
-                                    viewModel.setHeight(height)
-                                    viewModel.calculateBMI()
+                                    viewModel.setHeight(userId, height) // ✅ 传递 userId
+                                    viewModel.calculateBMI(userId)
                                     showBMIDialog = false
                                     heightInput = ""
+                                } else {
+                                    Toast.makeText(context, "Please enter a valid height", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         ) {
@@ -354,14 +365,17 @@ fun WeightScreen(
                             onClick = {
                                 val targetWeight = weightInput.toDoubleOrNull()
                                 if (targetWeight != null) {
-                                    viewModel.setTargetWeight(targetWeight)
+                                    viewModel.setTargetWeight(userId, targetWeight) // ✅ 传递 userId
                                     showTargetWeightDialog = false
                                     weightInput = ""
+                                } else {
+                                    Toast.makeText(context, "Please enter a valid target weight", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         ) {
                             Text("Save")
                         }
+
                     }
                 }
             }

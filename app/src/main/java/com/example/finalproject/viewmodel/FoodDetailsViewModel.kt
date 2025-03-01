@@ -7,7 +7,6 @@ import com.example.finalproject.utils.FoodResponse
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -28,30 +27,44 @@ class FoodDetailsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
 
-    fun fetchFoodDetailsFromFirestore(barcode: String) {
+    // ✅ **扫描完成后，存入用户的 `scanned_foods`**
+    fun saveScannedFood(userId: String, barcode: String, food: FoodResponse) {
         viewModelScope.launch {
             try {
-                Log.d("FoodDetailsViewModel", "Fetching food details for barcode: $barcode")
+                db.collection("users").document(userId)
+                    .collection("scanned_foods")
+                    .document(barcode)
+                    .set(food)
+                    .await()
+                Log.d("FoodDetailsViewModel", "Scanned food saved: ${food.product_name}")
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error saving scanned food", e)
+            }
+        }
+    }
 
-                val docSnapshot = db.collection("scanned_foods")
+    // ✅ **从 `scanned_foods` 获取扫描的食物**
+    fun fetchFoodDetailsFromFirestore(userId: String, barcode: String) {
+        viewModelScope.launch {
+            try {
+                val docSnapshot = db.collection("users").document(userId)
+                    .collection("scanned_foods")
                     .document(barcode)
                     .get()
                     .await()
 
                 if (docSnapshot.exists()) {
                     val food = docSnapshot.toObject(FoodResponse::class.java)
-                    Log.d("FoodDetailsViewModel", "Found food: $food")
-
                     food?.let {
-                        val foodList = listOf(it)
                         _uiState.value = UiState(
-                            foodItems = foodList,
-                            totalNutrition = calculateTotalNutrition(foodList)
+                            foodItems = listOf(it),
+                            totalNutrition = calculateTotalNutrition(listOf(it))
                         )
+                        Log.d("FoodDetailsViewModel", "Loaded scanned food: ${it.product_name}")
                     }
                 } else {
-                    Log.d("FoodDetailsViewModel", "No food found for barcode: $barcode")
                     _uiState.value = UiState()
+                    Log.d("FoodDetailsViewModel", "No scanned food found for barcode: $barcode")
                 }
             } catch (e: Exception) {
                 Log.e("FoodDetailsViewModel", "Error fetching food details", e)
@@ -60,75 +73,24 @@ class FoodDetailsViewModel : ViewModel() {
         }
     }
 
-    fun addCurrentFoodToMainList() {
-        viewModelScope.launch {
-            val currentFood = _uiState.value.foodItems.firstOrNull()
-            currentFood?.let { food ->
-                try {
-                    // 先检查是否已经存在于 diet_foods 集合
-                    val existingDoc = db.collection("diet_foods")
-                        .whereEqualTo("barcode", food.barcode)
-                        .get()
-                        .await()
-
-                    if (existingDoc.isEmpty) {
-                        // 如果不存在，添加到 diet_foods 集合
-                        db.collection("diet_foods")
-                            .document(food.barcode)
-                            .set(food)
-                            .await()
-
-                        Log.d("FoodDetailsViewModel", "Added food to diet: ${food.product_name}")
-                    }
-
-                    // 重新加载所有 diet_foods
-                    loadAllDietFoods()
-                } catch (e: Exception) {
-                    Log.e("FoodDetailsViewModel", "Error adding food to diet", e)
-                }
-            }
-        }
-    }
-
-    fun deleteFoodFromFirestore(food: FoodResponse) {
+    // ✅ **从 `diet_foods` 获取用户的所有饮食数据**
+    fun loadAllDietFoods(userId: String) {
         viewModelScope.launch {
             try {
-                db.collection("diet_foods")
-                    .document(food.barcode)
-                    .delete()
-                    .await()
-
-                Log.d("FoodDetailsViewModel", "Successfully deleted food: ${food.product_name}")
-
-                // 重新加载所有 diet_foods
-                loadAllDietFoods()
-            } catch (e: Exception) {
-                Log.e("FoodDetailsViewModel", "Error deleting food", e)
-            }
-        }
-    }
-
-    // 在初始化时加载所有已添加的食物
-    init {
-        loadAllDietFoods()
-    }
-
-    private fun loadAllDietFoods() {
-        viewModelScope.launch {
-            try {
-                val querySnapshot = db.collection("diet_foods")
+                val querySnapshot = db.collection("users").document(userId)
+                    .collection("diet_foods")
                     .get()
                     .await()
 
                 val dietFoods = querySnapshot.toObjects(FoodResponse::class.java)
 
-                if (dietFoods.isNotEmpty()) {
-                    _uiState.value = UiState(
+                _uiState.value = if (dietFoods.isNotEmpty()) {
+                    UiState(
                         foodItems = dietFoods,
                         totalNutrition = calculateTotalNutrition(dietFoods)
                     )
                 } else {
-                    _uiState.value = UiState()
+                    UiState()
                 }
             } catch (e: Exception) {
                 Log.e("FoodDetailsViewModel", "Error loading diet foods", e)
@@ -137,6 +99,83 @@ class FoodDetailsViewModel : ViewModel() {
         }
     }
 
+    // ✅ **加载用户已扫描的食物**
+    fun loadScannedFoods(userId: String) {
+        viewModelScope.launch {
+            try {
+                val querySnapshot = db.collection("users").document(userId)
+                    .collection("scanned_foods")
+                    .get()
+                    .await()
+
+                val scannedFoods = querySnapshot.toObjects(FoodResponse::class.java)
+
+                _uiState.value = if (scannedFoods.isNotEmpty()) {
+                    UiState(
+                        foodItems = scannedFoods,
+                        totalNutrition = calculateTotalNutrition(scannedFoods)
+                    )
+                } else {
+                    UiState()
+                }
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error loading scanned foods", e)
+                _uiState.value = UiState()
+            }
+        }
+    }
+
+    // ✅ **添加食物到 `diet_foods`**
+    fun addCurrentFoodToMainList(userId: String) {
+        viewModelScope.launch {
+            val currentFood = _uiState.value.foodItems.firstOrNull()
+            currentFood?.let { food ->
+                try {
+                    val existingDoc = db.collection("users").document(userId)
+                        .collection("diet_foods")
+                        .whereEqualTo("barcode", food.barcode)
+                        .get()
+                        .await()
+
+                    if (existingDoc.isEmpty) {
+                        db.collection("users").document(userId)
+                            .collection("diet_foods")
+                            .document(food.barcode)
+                            .set(food)
+                            .await()
+                        Log.d("FoodDetailsViewModel", "Added to diet: ${food.product_name}")
+                    }
+
+                    // **重新加载用户的 `diet_foods`**
+                    loadAllDietFoods(userId)
+                } catch (e: Exception) {
+                    Log.e("FoodDetailsViewModel", "Error adding food to diet", e)
+                }
+            }
+        }
+    }
+
+    // ✅ **删除 `diet_foods` 里的食物**
+    fun deleteFoodFromFirestore(userId: String, food: FoodResponse) {
+        viewModelScope.launch {
+            try {
+                db.collection("users").document(userId)
+                    .collection("diet_foods")
+                    .document(food.barcode)
+                    .delete()
+                    .await()
+
+                Log.d("FoodDetailsViewModel", "Deleted from diet: ${food.product_name}")
+
+                // **重新加载 `diet_foods`**
+                loadAllDietFoods(userId)
+            } catch (e: Exception) {
+                Log.e("FoodDetailsViewModel", "Error deleting food", e)
+            }
+        }
+    }
+
+    // **计算所有食物的总营养信息**
     private fun calculateTotalNutrition(foodItems: List<FoodResponse>): TotalNutrition {
         return TotalNutrition(
             energy = foodItems.sumOf { it.energy_kcal },

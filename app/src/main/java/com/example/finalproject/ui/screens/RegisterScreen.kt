@@ -15,10 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: (String) -> Unit,
-    onNavigateToRegister: () -> Unit // 新增跳转到注册页面
-) {
+fun RegisterScreen(onRegisterSuccess: () -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -35,12 +32,12 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(50.dp))
 
         Text(
-            text = "Welcome Back",
+            text = "Create an Account",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Login now and let's live healthy together",
+            text = "Join us and start tracking your diet & emotions",
             fontSize = 16.sp,
             color = Color.Gray
         )
@@ -68,15 +65,14 @@ fun LoginScreen(
         Button(
             onClick = {
                 isLoading = true
-                auth.signInWithEmailAndPassword(email.value, password.value)
+                auth.createUserWithEmailAndPassword(email.value, password.value)
                     .addOnCompleteListener { task ->
                         isLoading = false
                         if (task.isSuccessful) {
-                            val userId = auth.currentUser?.uid ?: ""
-                            Toast.makeText(context, "Login Success!", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess(userId) // 登录成功后，传递用户 ID
+                            Toast.makeText(context, "Registration Success!", Toast.LENGTH_SHORT).show()
+                            onRegisterSuccess() // 注册成功后，回到登录界面
                         } else {
-                            Toast.makeText(context, "Login Failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Registration Failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
             },
@@ -88,28 +84,20 @@ fun LoginScreen(
             if (isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text(text = "Login Now", fontSize = 18.sp, color = Color.White)
+                Text(text = "Register Now", fontSize = 18.sp, color = Color.White)
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = "Forgot Password?",
-            color = Color.Gray,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ✅ 注册按钮，点击跳转到 `RegisterScreen`
+        // ✅ 返回登录按钮
         Text(
-            text = "Don't have an account? Register Now",
+            text = "Already have an account? Login",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Blue,
             modifier = Modifier
-                .clickable { onNavigateToRegister() } // 点击事件
+                .clickable { onRegisterSuccess() } // 点击返回登录
                 .align(Alignment.CenterHorizontally)
         )
     }

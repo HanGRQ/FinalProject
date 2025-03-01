@@ -31,30 +31,28 @@ class WeightViewModel : ViewModel() {
     private val _bmiResult = MutableStateFlow(0.0)
     val bmiResult: StateFlow<Double> = _bmiResult.asStateFlow()
 
-    init {
-        fetchWeightEntries()
-        fetchBMI()
-    }
-
-    fun addWeightEntry(date: String, weight: Double) {
+    fun addWeightEntry(userId: String, date: String, weight: Double) {
         viewModelScope.launch {
             try {
                 val entry = WeightEntry(date, weight)
-                db.collection("weight_entries")
+                db.collection("users").document(userId)
+                    .collection("weight_entries")
                     .add(entry)
                     .await()
 
-                fetchWeightEntries()
+                fetchWeightEntries(userId) // ✅ 确保 fetch 仅获取当前用户数据
             } catch (e: Exception) {
                 Log.e("WeightViewModel", "Error adding weight entry", e)
             }
         }
     }
 
-    fun setTargetWeight(weight: Double) {
+
+    fun setTargetWeight(userId: String, weight: Double) {
         viewModelScope.launch {
             try {
-                db.collection("user_settings")
+                db.collection("users").document(userId)
+                    .collection("user_settings")
                     .document("target_weight")
                     .set(mapOf("weight" to weight))
                     .await()
@@ -68,10 +66,11 @@ class WeightViewModel : ViewModel() {
         }
     }
 
-    fun setHeight(height: Double) {
+    fun setHeight(userId: String, height: Double) {
         viewModelScope.launch {
             try {
-                db.collection("user_settings")
+                db.collection("users").document(userId)
+                    .collection("user_settings")
                     .document("height")
                     .set(mapOf("value" to height))
                     .await()
@@ -81,17 +80,19 @@ class WeightViewModel : ViewModel() {
         }
     }
 
-    private fun fetchWeightEntries() {
+    fun fetchWeightEntries(userId: String) {
         viewModelScope.launch {
             try {
-                val weightQuery = db.collection("weight_entries")
+                val weightQuery = db.collection("users").document(userId)
+                    .collection("weight_entries")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
                     .get()
                     .await()
 
                 val entries = weightQuery.toObjects(WeightEntry::class.java)
 
-                val targetWeightDoc = db.collection("user_settings")
+                val targetWeightDoc = db.collection("users").document(userId)
+                    .collection("user_settings")
                     .document("target_weight")
                     .get()
                     .await()
@@ -111,10 +112,11 @@ class WeightViewModel : ViewModel() {
         }
     }
 
-    fun calculateBMI() {
+    fun calculateBMI(userId: String) {
         viewModelScope.launch {
             try {
-                val heightDoc = db.collection("user_settings")
+                val heightDoc = db.collection("users").document(userId)
+                    .collection("user_settings")
                     .document("height")
                     .get()
                     .await()
@@ -124,13 +126,15 @@ class WeightViewModel : ViewModel() {
 
                 if (heightInCentimeters > 0 && weight > 0) {
                     val heightInMeters = heightInCentimeters / 100
-                    val a = heightInMeters * heightInMeters
-                    val result = weight / a
-                    db.collection("user_settings")
+                    val bmi = weight / (heightInMeters * heightInMeters)
+
+                    db.collection("users").document(userId)
+                        .collection("user_settings")
                         .document("bmi")
-                        .set(mapOf("value" to result))
+                        .set(mapOf("value" to bmi))
                         .await()
-                    _bmiResult.value = result
+
+                    _bmiResult.value = bmi
                 }
             } catch (e: Exception) {
                 Log.e("WeightViewModel", "Error calculating BMI", e)
@@ -138,10 +142,11 @@ class WeightViewModel : ViewModel() {
         }
     }
 
-    private fun fetchBMI() {
+    fun fetchBMI(userId: String) {
         viewModelScope.launch {
             try {
-                val bmiDoc = db.collection("user_settings")
+                val bmiDoc = db.collection("users").document(userId)
+                    .collection("user_settings")
                     .document("bmi")
                     .get()
                     .await()

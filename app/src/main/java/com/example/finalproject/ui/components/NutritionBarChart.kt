@@ -67,7 +67,13 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
             }
         },
         update = { chart ->
-            // 营养属性的颜色定义
+            // **🚨 如果 `foodItems` 为空，清除图表**
+            if (foodItems.isEmpty()) {
+                chart.clear()
+                return@AndroidView
+            }
+
+            // **营养属性的颜色**
             val nutritionColors = listOf(
                 AndroidColor.parseColor("#FF4CAF50"),  // Energy - 绿色
                 AndroidColor.parseColor("#FF2196F3"),  // Carbohydrates - 蓝色
@@ -76,7 +82,7 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
                 AndroidColor.parseColor("#FF9C27B0")   // Proteins - 紫色
             )
 
-            // 准备营养属性的数据集
+            // **营养属性**
             val nutritionAttributes = listOf(
                 "energy_kcal" to "Energy (kcal)",
                 "carbohydrates" to "Carbohydrates",
@@ -86,7 +92,6 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
             )
 
             val dataSets = nutritionAttributes.mapIndexed { index, (attribute, label) ->
-                // 为每种营养属性创建数据集
                 val entries = foodItems.mapIndexed { foodIndex, food ->
                     val value = when (attribute) {
                         "energy_kcal" -> food.energy_kcal
@@ -100,16 +105,13 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
                 }
 
                 BarDataSet(entries, label).apply {
-                    color = nutritionColors[index]
+                    color = nutritionColors[index % nutritionColors.size]  // 防止颜色索引溢出
                     setDrawValues(true)
                 }
             }
 
-            // 配置数据
             val barData = BarData(dataSets)
-
-            // 计算柱状图宽度和间距
-            val groupCount = foodItems.size
+            val groupCount = foodItems.size.takeIf { it > 0 } ?: 1  // **防止 groupCount 为 0**
             val groupSpace = 0.3f
             val barSpace = 0.05f
             val barWidth = 0.15f
@@ -117,21 +119,20 @@ fun NutritionBarChart(foodItems: List<FoodResponse>, modifier: Modifier = Modifi
             barData.barWidth = barWidth
             chart.data = barData
 
-            // 设置 X 轴范围和间距
-            chart.xAxis.axisMinimum = 0f
-            chart.xAxis.axisMaximum = groupCount.toFloat()
+            // **设置 X 轴**
+            chart.xAxis.apply {
+                axisMinimum = 0f
+                axisMaximum = groupCount.toFloat()
+                valueFormatter = IndexAxisValueFormatter(
+                    if (foodItems.isNotEmpty()) foodItems.map { it.product_name.ifEmpty { "Unknown" } }
+                    else listOf("No Data")
+                )
+            }
+
             chart.groupBars(0f, groupSpace, barSpace)
-
-            // X轴标签为食物名称
-            chart.xAxis.valueFormatter = IndexAxisValueFormatter(
-                foodItems.map { it.product_name.ifEmpty { "Unknown" } }
-            )
-
-            // 启用缩放和滑动
             chart.setVisibleXRangeMaximum(5f)
             chart.isScaleXEnabled = true
             chart.setPinchZoom(true)
-
             chart.invalidate()
         }
     )

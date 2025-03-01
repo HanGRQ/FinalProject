@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.finalproject.api.OpenFoodFactsService
 import com.example.finalproject.utils.FoodResponse
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -49,9 +50,19 @@ class FoodRepository @Inject constructor(
         }
     }
 
-    suspend fun saveFoodToFirestore(food: FoodResponse) {
-        firestore.collection("scanned_foods")
-            .document(food.barcode)
-            .set(food)
+    suspend fun saveFoodToUserFirestore(userId: String, food: FoodResponse) {
+        try {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users").document(userId)
+                .collection("scanned_foods")
+                .document(food.barcode)
+                .set(food)
+                .await()
+        } catch (e: Exception) {
+            throw e
+        }
     }
+
+
+
 }
