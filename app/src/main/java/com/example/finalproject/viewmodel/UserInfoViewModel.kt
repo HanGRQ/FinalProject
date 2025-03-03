@@ -12,30 +12,55 @@ class UserInfoViewModel : ViewModel() {
     private val _userId = MutableStateFlow<String?>(null)
     val userId: StateFlow<String?> = _userId
 
-    private val _userName = MutableStateFlow<String>("")
-    val userName: StateFlow<String> = _userName
+    private val _userEmail = MutableStateFlow("")
+    val userEmail: StateFlow<String> = _userEmail
+
+    private val _userHeight = MutableStateFlow("")
+    val userHeight: StateFlow<String> = _userHeight
+
+    private val _userWeight = MutableStateFlow("")
+    val userWeight: StateFlow<String> = _userWeight
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
     init {
-        auth.currentUser?.uid?.let { uid ->
-            _userId.value = uid
-            fetchUserName(uid)
+        auth.currentUser?.let { user ->
+            _userId.value = user.uid
+            _userEmail.value = user.email ?: "Unknown Email"
+            fetchUserInfo(user.uid)
         }
     }
 
-    fun setUserId(uid: String) {
+    fun setUserId(uid: String?) {
         _userId.value = uid
-        fetchUserName(uid)
+        if (uid != null) {
+            fetchUserInfo(uid)
+        }
     }
 
-    private fun fetchUserName(uid: String) {
+    private fun fetchUserInfo(uid: String) {
         viewModelScope.launch {
-            db.collection("users").document(uid).get()
+            db.collection("users").document(uid)
+                .collection("user_settings")
+                .document("height")
+                .get()
                 .addOnSuccessListener { document ->
-                    val name = document.getString("name") ?: "User"
-                    _userName.value = name
+                    _userHeight.value = document.getDouble("value")?.toString() ?: "--"
+                }
+
+            db.collection("users").document(uid)
+                .collection("weight_entries")
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { result ->
+                    if (!result.isEmpty) {
+                        val latestWeight = result.documents.first().getDouble("weight")
+                        _userWeight.value = latestWeight?.toString() ?: "--"
+                    } else {
+                        _userWeight.value = "--"
+                    }
                 }
         }
     }

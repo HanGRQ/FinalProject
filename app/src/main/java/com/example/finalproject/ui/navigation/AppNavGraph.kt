@@ -13,6 +13,7 @@ import com.example.finalproject.ui.screens.*
 import com.example.finalproject.viewmodel.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
+import com.google.firebase.auth.FirebaseAuth
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
@@ -66,14 +67,16 @@ fun AppNavGraph(navController: NavHostController) {
 
             HomeScreen(
                 userId = userId!!,
+                userInfoViewModel = hiltViewModel(), // ✅ 传递 UserInfoViewModel，获取邮箱
                 viewModel = hiltViewModel(),
                 onNavigateToFoodDetails = { navController.navigate("food_details/$userId") },
                 onNavigateToMoodDetails = { navController.navigate("mood_details/$userId") },
                 onNavigateToWeight = { navController.navigate("weight") },
                 onNavigateToData = { navController.navigate("data") },
-                onNavigateToPersonal = { navController.navigate("personal") }
+                onNavigateToPersonal = { navController.navigate("personal/$userId") } // ✅ 修改：确保传递 userId
             )
         }
+
 
         /** ✅ FoodDetailsScreen 连接 ScanScreen */
         composable(
@@ -173,9 +176,22 @@ fun AppNavGraph(navController: NavHostController) {
         /** ✅ PersonalScreen */
         composable("personal") {
             if (userId == null) return@composable
-            PersonalScreen(userId = userId!!) { route ->
-                navController.navigate(route) { launchSingleTop = true }
-            }
+            val viewModel: UserInfoViewModel = hiltViewModel()
+
+            PersonalScreen(
+                userId = userId!!,
+                viewModel = viewModel,
+                onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } },
+                onLogout = {
+                    FirebaseAuth.getInstance().signOut() // ✅ 退出 Firebase 账号
+                    userInfoViewModel.setUserId(null)  // ✅ 清除 userId
+                    navController.navigate("login") {
+                        popUpTo("personal") { inclusive = true } // ✅ 关闭 PersonalScreen
+                    }
+                }
+            )
         }
+
+
     }
 }

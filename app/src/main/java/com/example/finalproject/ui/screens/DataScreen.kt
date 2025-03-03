@@ -75,11 +75,6 @@ fun DataScreen(
                             .size(40.dp)
                             .clip(CircleShape)
                     )
-                    Text(
-                        text = "User ID: $userId", // ✅ 显示用户 ID
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
                 }
             }
 

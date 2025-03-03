@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,13 +20,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
+import com.example.finalproject.viewmodel.UserInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalScreen(
-    userId: String, // ✅ 接收 userId
-    onNavigateTo: (String) -> Unit
+    userId: String,
+    viewModel: UserInfoViewModel, // ✅ 添加 UserInfoViewModel 以获取用户数据
+    onNavigateTo: (String) -> Unit,
+    onLogout: () -> Unit
 ) {
+    val userEmail by viewModel.userEmail.collectAsState() // ✅ 获取用户邮箱
+    val userHeight by viewModel.userHeight.collectAsState() // ✅ 获取身高
+    val userWeight by viewModel.userWeight.collectAsState() // ✅ 获取当前体重
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -54,25 +61,23 @@ fun PersonalScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Name
+            // ✅ 显示用户邮箱（登录的邮箱）
             Text(
-                text = "Hello World", // Replace with user's name if available
+                text = userEmail.ifEmpty { "Unknown Email" }, // ✅ 为空时显示默认值
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Stats Row
+            // ✅ 显示用户的 Height 和 Weight
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("23", color = Color.Gray) // Example Age
+                Text("${userHeight.ifEmpty { "--" }} cm", color = Color.Gray)
                 Text(" · ", color = Color.Gray)
-                Text("175cm", color = Color.Gray) // Example Height
-                Text(" · ", color = Color.Gray)
-                Text("65kg", color = Color.Gray) // Example Weight
+                Text("${userWeight.ifEmpty { "--" }} kg", color = Color.Gray)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -118,6 +123,13 @@ fun PersonalScreen(
                 leadingContent = { Icon(Icons.Default.Settings, contentDescription = null) },
                 trailingContent = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
                 modifier = Modifier.clickable { onNavigateTo("settings") }
+            )
+
+            // ✅ Logout 按钮
+            ListItem(
+                headlineContent = { Text("Logout", color = Color.Red) },
+                leadingContent = { Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = Color.Red) },
+                modifier = Modifier.clickable(onClick = onLogout)
             )
         }
     }

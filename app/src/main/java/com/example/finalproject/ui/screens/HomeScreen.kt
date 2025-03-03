@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -25,6 +27,7 @@ import com.example.finalproject.viewmodel.UserInfoViewModel
 @Composable
 fun HomeScreen(
     userId: String, // ✅ 添加 userId
+    userInfoViewModel: UserInfoViewModel, // ✅ 获取用户信息
     viewModel: FoodDetailsViewModel,
     onNavigateToFoodDetails: () -> Unit,
     onNavigateToMoodDetails: () -> Unit,
@@ -33,11 +36,11 @@ fun HomeScreen(
     onNavigateToPersonal: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val userEmail by userInfoViewModel.userEmail.collectAsState()
 
     LaunchedEffect(userId) {
         viewModel.loadAllDietFoods(userId) // ✅ 确保 ViewModel 加载数据
     }
-
 
     Scaffold(
         bottomBar = {
@@ -53,81 +56,79 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(Color.White)
+                .background(Color.White),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ✅ 个人信息区域，显示 userId
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.profile_image),
-                    contentDescription = "Profile Image",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Hello, User $userId", // ✅ 显示 userId
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "You gained 2kg yesterday, keep it up!",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { /* Handle calendar click */ }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = "Calendar",
-                        tint = Color(0xFF00BFA5)
-                    )
-                }
-            }
-
-            // ✅ 显示用户的饮食数据
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            item {
+                // ✅ 个人信息区域，显示邮箱
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "${uiState.totalNutrition.energy.toInt()} kcal",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
+                    Image(
+                        painter = painterResource(id = R.drawable.profile_image),
+                        contentDescription = "Profile Image",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${uiState.foodItems.size} Meals",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = userEmail.ifEmpty { "User Email" }, // ✅ 显示用户邮箱
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "You gained 2kg yesterday, keep it up!",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { /* Handle calendar click */ }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar),
+                            contentDescription = "Calendar",
+                            tint = Color(0xFF00BFA5)
+                        )
+                    }
                 }
             }
 
-            // ✅ 食物数据
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
+            item {
+                // ✅ 显示用户的饮食数据
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${uiState.totalNutrition.energy.toInt()} kcal",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${uiState.foodItems.size} Meals",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+
+            item {
+                // ✅ 食物数据
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -147,13 +148,15 @@ fun HomeScreen(
                         tint = Color.Gray
                     )
                 }
+            }
 
-                if (uiState.foodItems.isNotEmpty()) {
-                    uiState.foodItems.forEach { food ->
-                        FoodItem(food = food)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                } else {
+            if (uiState.foodItems.isNotEmpty()) {
+                items(uiState.foodItems) { food ->
+                    FoodItem(food = food)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            } else {
+                item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -170,12 +173,8 @@ fun HomeScreen(
                 }
             }
 
-            // ✅ 心情状态
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
+            item {
+                // ✅ 心情状态
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -185,7 +184,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Today's Mood",
+                        text = "Today's Emotion",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -195,7 +194,9 @@ fun HomeScreen(
                         tint = Color.Gray
                     )
                 }
+            }
 
+            item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = 8.dp)
