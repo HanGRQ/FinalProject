@@ -2,8 +2,6 @@ package com.example.finalproject.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.finalproject.R
+import com.example.finalproject.ui.components.NutritionPieChart
 import com.example.finalproject.ui.components.NutritionBarChart
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
 import com.example.finalproject.utils.FoodResponse
@@ -59,142 +58,146 @@ fun FoodDetailsScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF6F6F6))
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .background(Color(0xFFF6F6F6)),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 总能量卡片
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            item {
+                // **✅ 替换总能量卡片，改用 `NutritionPieChart`**
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
                 ) {
-                    Text(
-                        text = "${uiState.totalNutrition.energy.toInt()} kcal",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${uiState.foodItems.size} Meals",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Nutrition Breakdown",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        NutritionPieChart(
+                            totalEnergy = uiState.totalNutrition.energy.toFloat(),
+                            carbs = uiState.totalNutrition.carbs.toFloat(),
+                            fat = uiState.totalNutrition.fat.toFloat(),
+                            protein = uiState.totalNutrition.protein.toFloat(),
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 营养信息行
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                NutritionalInfo("Total Energy", "${uiState.totalNutrition.energy.toInt()}", "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%")
-                NutritionalInfo("Carbohydrates", "${uiState.totalNutrition.carbs.toInt()}g", "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%")
-                NutritionalInfo("Fat", "${uiState.totalNutrition.fat.toInt()}g", "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%")
-                NutritionalInfo("Protein", "${uiState.totalNutrition.protein.toInt()}g", "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%")
+            item {
+                // **✅ 营养信息**
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    NutritionalInfo("Total Energy", "${uiState.totalNutrition.energy.toInt()} kcal", "${(uiState.totalNutrition.energy / 2000.0 * 100).toInt()}%")
+                    NutritionalInfo("Carbohydrates", "${uiState.totalNutrition.carbs.toInt()}g", "${(uiState.totalNutrition.carbs / 300.0 * 100).toInt()}%")
+                    NutritionalInfo("Fat", "${uiState.totalNutrition.fat.toInt()}g", "${(uiState.totalNutrition.fat / 65.0 * 100).toInt()}%")
+                    NutritionalInfo("Protein", "${uiState.totalNutrition.protein.toInt()}g", "${(uiState.totalNutrition.protein / 50.0 * 100).toInt()}%")
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 营养图表
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+            item {
+                // **✅ 营养趋势图**
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
                 ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Nutrition Trends",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        NutritionBarChart(
+                            foodItems = uiState.foodItems,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                        )
+                    }
+                }
+            }
+
+            if (uiState.foodItems.isNotEmpty()) {
+                item {
                     Text(
-                        text = "Nutrition Trends",
+                        text = "Diet Data",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    NutritionBarChart(
-                        foodItems = uiState.foodItems,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 食物项目列表
-            if (uiState.foodItems.isNotEmpty()) {
-                Text(
-                    text = "Diet Data",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column {
-                    uiState.foodItems.forEach { food ->
-                        FoodItem(
-                            food = food,
-                            onDelete = { viewModel.deleteFoodFromFirestore(userId, food) } // ✅ 传递 userId
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                items(uiState.foodItems) { food ->
+                    FoodItem(
+                        food = food,
+                        onDelete = { viewModel.deleteFoodFromFirestore(userId, food) }
+                    )
                 }
             } else {
-                // 空状态食物列表
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No food items added yet.",
-                        textAlign = TextAlign.Center,
-                        color = Color.Gray,
-                        fontSize = 16.sp
-                    )
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No food items added yet.",
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 扫描按钮 - 始终可见
-            Button(
-                onClick = onScanButtonClick,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D40)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.QrCodeScanner,
-                    contentDescription = "Barcode Scanner",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Scan to Add Food", color = Color.White, fontSize = 16.sp)
+            item {
+                // **✅ 扫描按钮**
+                Button(
+                    onClick = onScanButtonClick,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004D40)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.QrCodeScanner,
+                        contentDescription = "Barcode Scanner",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Scan to Add Food", color = Color.White, fontSize = 16.sp)
+                }
             }
         }
     }
 }
+
 
 
 

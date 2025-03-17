@@ -1,9 +1,11 @@
 package com.example.finalproject.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,8 +23,12 @@ class UserInfoViewModel : ViewModel() {
     private val _userWeight = MutableStateFlow("")
     val userWeight: StateFlow<String> = _userWeight
 
+    private val _profileImageUrl = MutableStateFlow<String?>(null)
+    val profileImageUrl: StateFlow<String?> = _profileImageUrl
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
     init {
         auth.currentUser?.let { user ->
@@ -42,8 +48,14 @@ class UserInfoViewModel : ViewModel() {
     private fun fetchUserInfo(uid: String) {
         viewModelScope.launch {
             db.collection("users").document(uid)
-                .collection("user_settings")
-                .document("height")
+                .collection("user_settings").document("profile")
+                .get()
+                .addOnSuccessListener { document ->
+                    _profileImageUrl.value = document.getString("imageUrl") ?: ""
+                }
+
+            db.collection("users").document(uid)
+                .collection("user_settings").document("height")
                 .get()
                 .addOnSuccessListener { document ->
                     _userHeight.value = document.getDouble("value")?.toString() ?: "--"
@@ -63,5 +75,24 @@ class UserInfoViewModel : ViewModel() {
                     }
                 }
         }
+    }
+
+    fun uploadProfileImage(imageUri: Uri, onComplete: (Boolean) -> Unit) {
+        val userId = _userId.value ?: return
+        val storageRef = storage.reference.child("profile_images/$userId.jpg")
+
+        storageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                storageRef.downloadUrl.addOnSuccessListener { uri ->
+                    val imageUrl = uri.toString()
+                    _profileImageUrl.value = imageUrl
+
+                    db.collection("users").document(userId)
+                        .collection("user_settings").document("profile")
+                        .set(mapOf("imageUrl" to imageUrl))
+                        .addOnCompleteListener { task -> onComplete(task.isSuccessful) }
+                }
+            }
+            .addOnFailureListener { onComplete(false) }
     }
 }

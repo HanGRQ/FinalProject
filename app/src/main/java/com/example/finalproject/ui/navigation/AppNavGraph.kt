@@ -77,6 +77,61 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
+        /** ✅ DataScreen */
+        composable("data") {
+            if (userId == null) return@composable
+            val viewModel: DataViewModel = hiltViewModel()
+            val userInfoViewModel: UserInfoViewModel = hiltViewModel()
+
+            DataScreen(
+                userId = userId!!,
+                viewModel = viewModel,
+                userInfoViewModel = userInfoViewModel,
+                onNavigateToWeight = { navController.navigate("weight") { launchSingleTop = true } },
+                onNavigateToHome = { navController.navigate("home") { launchSingleTop = true } },
+                onNavigateToPersonal = { navController.navigate("personal/$userId") { launchSingleTop = true } }
+            )
+        }
+
+        /** ✅ WeightScreen */
+        composable("weight") {
+            if (userId == null) return@composable
+            val viewModel: WeightViewModel = hiltViewModel()
+            val userInfoViewModel: UserInfoViewModel = hiltViewModel()
+
+            WeightScreen(
+                viewModel = viewModel,
+                userId = userId!!,
+                userInfoViewModel = userInfoViewModel,
+                onNavigateToHome = { navController.navigate("home") { launchSingleTop = true } },
+                onNavigateToData = { navController.navigate("data") { launchSingleTop = true } },
+                onNavigateToPersonal = { navController.navigate("personal/$userId") { launchSingleTop = true } }
+            )
+        }
+
+        /** ✅ PersonalScreen */
+        composable("personal/{userId}", arguments = listOf(navArgument("userId") { type = NavType.StringType })) {
+            val userId = it.arguments?.getString("userId") ?: return@composable
+            val viewModel: UserInfoViewModel = hiltViewModel()
+
+            PersonalScreen(
+                userId = userId,
+                viewModel = viewModel,
+                onNavigateToHome = { navController.navigate("home") { launchSingleTop = true } },
+                onNavigateToData = { navController.navigate("data") { launchSingleTop = true } },
+                onNavigateToWeight = { navController.navigate("weight") { launchSingleTop = true } },
+                onNavigateToFoodDetails = { navController.navigate("food_details/$userId") { launchSingleTop = true } },
+                onNavigateToPersonalDetails = { navController.navigate("personal_details/$userId") { launchSingleTop = true } },
+                onNavigateToSettings = { navController.navigate("settings/$userId") { launchSingleTop = true } },
+                onLogout = {
+                    FirebaseAuth.getInstance().signOut()
+                    userInfoViewModel.setUserId(null)
+                    navController.navigate("login") {
+                        popUpTo("personal/$userId") { inclusive = true }
+                    }
+                }
+            )
+        }
 
         /** ✅ FoodDetailsScreen 连接 ScanScreen */
         composable(
@@ -151,47 +206,6 @@ fun AppNavGraph(navController: NavHostController) {
                 onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } }
             )
         }
-
-        /** ✅ DataScreen */
-        composable("data") {
-            if (userId == null) return@composable
-            val viewModel: DataViewModel = hiltViewModel()
-
-            DataScreen(
-                userId = userId!!,
-                viewModel = viewModel,
-                onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } }
-            )
-        }
-
-        /** ✅ WeightScreen */
-        composable("weight") {
-            if (userId == null) return@composable
-            val viewModel: WeightViewModel = hiltViewModel()
-            WeightScreen(viewModel = viewModel, userId = userId!!) { route ->
-                navController.navigate(route) { launchSingleTop = true }
-            }
-        }
-
-        /** ✅ PersonalScreen */
-        composable("personal") {
-            if (userId == null) return@composable
-            val viewModel: UserInfoViewModel = hiltViewModel()
-
-            PersonalScreen(
-                userId = userId!!,
-                viewModel = viewModel,
-                onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } },
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut() // ✅ 退出 Firebase 账号
-                    userInfoViewModel.setUserId(null)  // ✅ 清除 userId
-                    navController.navigate("login") {
-                        popUpTo("personal") { inclusive = true } // ✅ 关闭 PersonalScreen
-                    }
-                }
-            )
-        }
-
 
     }
 }

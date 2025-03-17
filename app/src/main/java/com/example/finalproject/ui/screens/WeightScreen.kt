@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,8 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import coil.compose.rememberImagePainter
 import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
+import com.example.finalproject.viewmodel.UserInfoViewModel
 import com.example.finalproject.viewmodel.WeightViewModel
 import com.example.finalproject.viewmodel.WeightEntry
 import com.github.mikephil.charting.charts.LineChart
@@ -41,9 +44,12 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeightScreen(
-    userId: String,  // ✅ 添加 userId
+    userId: String,
     viewModel: WeightViewModel,
-    onNavigateTo: (String) -> Unit
+    userInfoViewModel: UserInfoViewModel,
+    onNavigateToHome: () -> Unit,
+    onNavigateToData: () -> Unit,
+    onNavigateToPersonal: () -> Unit
 ) {
     val weightState by viewModel.weightState.collectAsState()
     val bmiResult by viewModel.bmiResult.collectAsState()
@@ -69,6 +75,8 @@ fun WeightScreen(
         )
     }
 
+    val profileImageUrl by userInfoViewModel.profileImageUrl.collectAsState()
+
     // ✅ 加载当前用户的体重数据
     LaunchedEffect(userId) {
         viewModel.fetchWeightEntries(userId)
@@ -78,7 +86,13 @@ fun WeightScreen(
         bottomBar = {
             BottomNavigationBar(
                 currentRoute = "weight",
-                onNavigate = onNavigateTo
+                onNavigate = { route ->
+                    when (route) {
+                        "home" -> onNavigateToHome()
+                        "data" -> onNavigateToData()
+                        "personal" -> onNavigateToPersonal()
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -94,11 +108,16 @@ fun WeightScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.profile_image),
-                    contentDescription = "Profile",
+                    painter = rememberImagePainter(
+                        data = profileImageUrl ?: R.drawable.profile_image,
+                        builder = { crossfade(true) }
+                    ),
+                    contentDescription = "Profile Picture",
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
+                        .clickable { onNavigateToPersonal()},
+                    contentScale = ContentScale.Crop
                 )
                 IconButton(
                     onClick = { showWeightDialog = true },

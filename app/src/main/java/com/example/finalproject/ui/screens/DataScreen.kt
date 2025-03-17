@@ -2,6 +2,7 @@ package com.example.finalproject.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,11 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import coil.compose.rememberImagePainter
 import com.example.finalproject.ui.components.BottomNavigationBar
 import com.example.finalproject.viewmodel.DataViewModel
 import com.example.finalproject.utils.FoodResponse
@@ -26,12 +29,16 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.example.finalproject.R
+import com.example.finalproject.viewmodel.UserInfoViewModel
 
 @Composable
 fun DataScreen(
     userId: String,
-    onNavigateTo: (String) -> Unit,
-    viewModel: DataViewModel
+    userInfoViewModel: UserInfoViewModel,
+    viewModel: DataViewModel,
+    onNavigateToWeight: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToPersonal: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
     val dietFoodsList by viewModel.dietFoods.collectAsState(initial = emptyList())
@@ -40,6 +47,7 @@ fun DataScreen(
 
     val totalEnergyKcal by viewModel.totalEnergyKcal.collectAsState(initial = 0.0)
     val totalSugars by viewModel.totalSugars.collectAsState(initial = 0.0)
+    val profileImageUrl by userInfoViewModel.profileImageUrl.collectAsState()
 
     LaunchedEffect(userId) {
         viewModel.fetchDietFoods(userId)
@@ -51,7 +59,13 @@ fun DataScreen(
         bottomBar = {
             BottomNavigationBar(
                 currentRoute = "data",
-                onNavigate = onNavigateTo
+                onNavigate = { route ->
+                    when (route) {
+                        "weight" -> onNavigateToWeight()
+                        "home" -> onNavigateToHome()
+                        "personal" -> onNavigateToPersonal()
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -69,11 +83,16 @@ fun DataScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.profile_image),
-                        contentDescription = "Profile",
+                        painter = rememberImagePainter(
+                            data = profileImageUrl ?: R.drawable.profile_image,
+                            builder = { crossfade(true) }
+                        ),
+                        contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
+                            .clickable { onNavigateToPersonal() },
+                        contentScale = ContentScale.Crop
                     )
                 }
             }

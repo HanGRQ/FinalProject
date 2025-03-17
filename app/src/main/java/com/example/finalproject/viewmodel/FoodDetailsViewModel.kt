@@ -14,8 +14,10 @@ data class TotalNutrition(
     val energy: Double = 0.0,
     val carbs: Double = 0.0,
     val fat: Double = 0.0,
-    val protein: Double = 0.0
+    val protein: Double = 0.0,
+    val totalSugars: Double = 0.0 // ✅ 添加 `totalSugars`
 )
+
 
 data class UiState(
     val foodItems: List<FoodResponse> = emptyList(),
@@ -87,7 +89,7 @@ class FoodDetailsViewModel : ViewModel() {
                 _uiState.value = if (dietFoods.isNotEmpty()) {
                     UiState(
                         foodItems = dietFoods,
-                        totalNutrition = calculateTotalNutrition(dietFoods)
+                        totalNutrition = calculateTotalNutrition(dietFoods) // ✅ 计算 `totalEnergy` 和 `totalSugars`
                     )
                 } else {
                     UiState()
@@ -98,6 +100,7 @@ class FoodDetailsViewModel : ViewModel() {
             }
         }
     }
+
 
     // ✅ **加载用户已扫描的食物**
     fun loadScannedFoods(userId: String) {
@@ -181,7 +184,9 @@ class FoodDetailsViewModel : ViewModel() {
             energy = foodItems.sumOf { it.energy_kcal },
             carbs = foodItems.sumOf { it.carbohydrates },
             fat = foodItems.sumOf { it.fat },
-            protein = foodItems.sumOf { it.proteins }
+            protein = foodItems.sumOf { it.proteins },
+            totalSugars = foodItems.sumOf { it.sugars } // ✅ 计算 `totalSugars`
         )
     }
+
 }
