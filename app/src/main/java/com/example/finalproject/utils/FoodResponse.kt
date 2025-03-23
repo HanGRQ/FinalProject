@@ -9,4 +9,5 @@ data class FoodResponse(
     val sugars: Double = 0.0,
     val fat: Double = 0.0,
     val proteins: Double = 0.0,
+    val scan_date: String = ""
 )

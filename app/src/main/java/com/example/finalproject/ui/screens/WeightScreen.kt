@@ -108,15 +108,19 @@ fun WeightScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = rememberImagePainter(
-                        data = profileImageUrl ?: R.drawable.profile_image,
-                        builder = { crossfade(true) }
-                    ),
+                    painter = if (profileImageUrl != null && profileImageUrl!!.isNotEmpty()) {
+                        rememberImagePainter(
+                            data = profileImageUrl,
+                            builder = { crossfade(true) }
+                        )
+                    } else {
+                        painterResource(id = R.drawable.profile_image)
+                    },
                     contentDescription = "Profile Picture",
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .clickable { onNavigateToPersonal()},
+                        .clickable { onNavigateToPersonal() },
                     contentScale = ContentScale.Crop
                 )
                 IconButton(

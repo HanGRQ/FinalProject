@@ -79,10 +79,14 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Image(
-                        painter = rememberImagePainter(
-                            data = profileImageUrl ?: R.drawable.profile_image,
-                            builder = { crossfade(true) }
-                        ),
+                        painter = if (profileImageUrl != null && profileImageUrl!!.isNotEmpty()) {
+                            rememberImagePainter(
+                                data = profileImageUrl,
+                                builder = { crossfade(true) }
+                            )
+                        } else {
+                            painterResource(id = R.drawable.profile_image)
+                        },
                         contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(40.dp)
