@@ -8,6 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.SentimentDissatisfied
+import androidx.compose.material.icons.filled.SentimentNeutral
+import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -154,8 +159,20 @@ fun DataScreen(
                 }
 
                 // 显示每日糖分摄入量
-                items(dailySugarsIntake.entries.toList().sortedBy { it.key }) { (date, sugars) ->
-                    DailySugarItem(date = date, sugars = sugars)
+                // 显示每日糖分摄入量
+                items(dailySugarsIntake.entries.toList().sortedBy { (dateStr, _) ->
+                    try {
+                        val format = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                        format.parse(dateStr)?.time ?: Long.MAX_VALUE
+                    } catch (e: Exception) {
+                        Long.MAX_VALUE
+                    }
+                }) { (date, sugars) ->
+                    DailySugarItem(
+                        date = date,
+                        sugars = sugars,
+                        viewModel = viewModel
+                    )
                 }
             } else if (selectedTab == 1) {
                 item { EmotionChartView(emotionData) }
@@ -349,13 +366,27 @@ fun DailySugarsLineChart(dailySugars: Map<String, Double>) {
 }
 
 // 日期糖分项目
+// 日期糖分项目
 @Composable
-fun DailySugarItem(date: String, sugars: Double) {
-    // 格式化日期显示（如果需要从其他格式转换）
+fun DailySugarItem(
+    date: String,
+    sugars: Double,
+    viewModel: DataViewModel // 添加 ViewModel 参数
+) {
+    // 获取提示信息
+    val mood = viewModel.getMoodForDate(date)
+    val isExceeding = viewModel.isSugarExceedingLimit(date)
+    val tipMessage = viewModel.getTipMessageForMoodAndSugar(date)
+
+    // 提示按钮颜色
+    val tipButtonColor = if (isExceeding) Color(0xFFE57373) else Color(0xFF4CAF50)
+
+    // 显示提示的状态
+    var showTip by remember { mutableStateOf(false) }
+
+    // 格式化日期显示
     val formattedDate = try {
-        // 检查日期是否已经是 dd-MM-yyyy 格式
         if (!date.matches(Regex("\\d{2}-\\d{2}-\\d{4}"))) {
-            // 尝试解析原始日期（假设可能是 yyyy-MM-dd 格式）
             val originalFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val targetFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
             val parsedDate = originalFormat.parse(date)
@@ -364,7 +395,6 @@ fun DailySugarItem(date: String, sugars: Double) {
             date
         }
     } catch (e: Exception) {
-        // 如果转换失败，则使用原始日期
         date
     }
 
@@ -374,22 +404,96 @@ fun DailySugarItem(date: String, sugars: Double) {
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = formattedDate,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "${sugars.toInt()} g",
-                color = Color(0xFFFFB74D),
-                fontWeight = FontWeight.Bold
-            )
+        Box {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = formattedDate,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${sugars.toInt()} g",
+                        color = Color(0xFFFFB74D),
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // 提示按钮
+                    IconButton(
+                        onClick = { showTip = !showTip },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = "Tip",
+                            tint = tipButtonColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // 提示浮窗
+            if (showTip) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 48.dp, end = 12.dp)
+                        .width(200.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF333333)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        // 显示情绪状态
+                        if (mood != "No Data") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            ) {
+                                val moodIcon = when (mood) {
+                                    "Good" -> Icons.Filled.SentimentSatisfied
+                                    "Regular" -> Icons.Filled.SentimentNeutral
+                                    "Bad" -> Icons.Filled.SentimentDissatisfied
+                                    else -> Icons.Filled.SentimentNeutral
+                                }
+
+                                Icon(
+                                    imageVector = moodIcon,
+                                    contentDescription = "Mood",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                Text(
+                                    text = "Mood: $mood",
+                                    color = Color.White,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        // 显示提示信息
+                        Text(
+                            text = tipMessage,
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -481,6 +585,27 @@ fun EmotionHistoryItemData(date: String, mood: String) {
         else -> R.drawable.ic_mood_neutral
     }
 
+    // 格式化日期显示（确保是 dd-MM-yyyy 格式）
+    val formattedDate = try {
+        // 尝试解析日期格式
+        if (date.matches(Regex("\\d{2}-\\d{2}-\\d{4}"))) {
+            // 已经是正确的格式，直接使用
+            date
+        } else if (date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+            // 是 yyyy-MM-dd 格式，需要转换
+            val originalFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val targetFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+            val parsedDate = originalFormat.parse(date)
+            parsedDate?.let { targetFormat.format(it) } ?: date
+        } else {
+            // 其他不识别的格式，直接使用
+            date
+        }
+    } catch (e: Exception) {
+        // 转换失败时使用原始日期
+        date
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
@@ -497,7 +622,7 @@ fun EmotionHistoryItemData(date: String, mood: String) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
-                Text(text = date, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(text = formattedDate, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(text = mood, fontSize = 14.sp, color = Color.Gray)
             }
         }

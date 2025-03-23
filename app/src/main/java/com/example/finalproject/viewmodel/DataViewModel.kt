@@ -83,9 +83,24 @@ class DataViewModel : ViewModel() {
                 .get()
                 .addOnSuccessListener { result ->
                     val emotions = result.documents.associate { doc ->
-                        val date = doc.id
+                        val dateId = doc.id
                         val mood = doc.getString("mood") ?: "No Data"
-                        formatDate(date) to mood // 转换日期格式
+
+                        // 尝试正确格式化日期
+                        val formattedDate = try {
+                            // 如果 dateId 是 yyyy-MM-dd 格式
+                            if (dateId.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                                val parsedDate = inputFormat.parse(dateId)
+                                parsedDate?.let { outputFormat.format(it) } ?: dateId
+                            } else {
+                                dateId // 如果不是，保持原样
+                            }
+                        } catch (e: Exception) {
+                            // 出错时使用原始日期ID
+                            dateId
+                        }
+
+                        formattedDate to mood
                     }
                     _emotionData.value = emotions
                 }
@@ -180,6 +195,37 @@ class DataViewModel : ViewModel() {
     fun getAllDates(): List<String> {
         return _foodsByDate.value.keys.sortedBy { dateStr ->
             dateToMillis(dateStr)
+        }
+    }
+
+    // 在 DataViewModel 中添加
+    // 糖分摄入量限额 (g)
+    private val SUGAR_INTAKE_LIMIT = 50.0
+
+    // 获取指定日期的情绪状态
+    fun getMoodForDate(date: String): String {
+        return _emotionData.value[date] ?: "No Data"
+    }
+
+    // 检查指定日期的糖分摄入是否超过限额
+    fun isSugarExceedingLimit(date: String): Boolean {
+        val sugarAmount = _dailySugarsIntake.value[date] ?: 0.0
+        return sugarAmount > SUGAR_INTAKE_LIMIT
+    }
+
+    // 获取基于情绪和糖分摄入的提示信息
+    fun getTipMessageForMoodAndSugar(date: String): String {
+        val mood = getMoodForDate(date)
+        val isExceeding = isSugarExceedingLimit(date)
+
+        return when {
+            mood == "Good" && isExceeding -> "Even when you're feeling good, watch your sugar intake!"
+            mood == "Good" && !isExceeding -> "Keep up the good work!"
+            mood == "Regular" && isExceeding -> "Please monitor your sugar intake."
+            mood == "Regular" && !isExceeding -> "Keep it up!"
+            mood == "Bad" && isExceeding -> "Even when you're feeling down, mind your sugar intake."
+            mood == "Bad" && !isExceeding -> "Keep up the good work!"
+            else -> "Keep monitoring your sugar intake."
         }
     }
 }

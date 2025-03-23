@@ -22,6 +22,11 @@ import com.google.android.gms.tasks.Task
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.firebase.auth.AuthCredential
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -32,6 +37,9 @@ fun LoginScreen(
     val password = remember { mutableStateOf("") }
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+
+    // 添加密码可见性状态
+    var passwordVisible by remember { mutableStateOf(false) }
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -81,11 +89,25 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // 修改密码输入框，添加可见性切换
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
             label = { Text("Enter Password") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) {
+                            Icons.Filled.Visibility
+                        } else {
+                            Icons.Filled.VisibilityOff
+                        },
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(40.dp))
