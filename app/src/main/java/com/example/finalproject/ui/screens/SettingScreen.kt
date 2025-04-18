@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    userId: String, // 添加userId参数
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
@@ -33,7 +34,8 @@ fun SettingsScreen(
         Column(
             modifier = Modifier.padding(paddingValues)
         ) {
-            // Settings screen content will be implemented later
+            // 这里可以添加设置项的内容
+            // ...
         }
     }
 }

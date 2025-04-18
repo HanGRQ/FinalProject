@@ -266,7 +266,7 @@ fun DailySugarsLineChart(dailySugars: Map<String, Double>) {
                 // 获取当前日期作为参考点
                 val today = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
 
-                // 将日期-糖分数据对转换为可排序的列表
+                // 将日期-糖分数据对转换为可排序的列表并排序
                 val sortedDatePairs = dailySugars.entries.toList().sortedBy { (dateStr, _) ->
                     try {
                         val format = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
@@ -276,34 +276,8 @@ fun DailySugarsLineChart(dailySugars: Map<String, Double>) {
                     }
                 }
 
-                // 找出当前日期在排序列表中的索引
-                val todayIndex = sortedDatePairs.indexOfFirst { (dateStr, _) ->
-                    dateStr == today
-                }.let { index -> if (index >= 0) index else sortedDatePairs.size / 2 }
-
-                // 重新安排日期顺序，使当前日期居中
-                val reorderedPairs = if (todayIndex >= 0) {
-                    val before = sortedDatePairs.take(todayIndex)
-                    val after = sortedDatePairs.drop(todayIndex + 1)
-                    val middle = sortedDatePairs.getOrNull(todayIndex)?.let { listOf(it) } ?: emptyList()
-
-                    // 计算需要的日期数量
-                    val totalDates = sortedDatePairs.size
-                    val leftDatesNeeded = totalDates / 2
-                    val rightDatesNeeded = totalDates - leftDatesNeeded - 1 // -1 是因为中间有一个日期
-
-                    // 从历史日期中取出所需数量
-                    val leftSide = before.takeLast(leftDatesNeeded)
-                    // 从未来日期中取出所需数量
-                    val rightSide = after.take(rightDatesNeeded)
-
-                    leftSide + middle + rightSide
-                } else {
-                    sortedDatePairs
-                }
-
                 // 为图表创建数据点
-                val entries = reorderedPairs.mapIndexed { index, (_, sugars) ->
+                val entries = sortedDatePairs.mapIndexed { index, (_, sugars) ->
                     Entry(index.toFloat(), sugars.toFloat())
                 }
 
@@ -312,20 +286,43 @@ fun DailySugarsLineChart(dailySugars: Map<String, Double>) {
                     valueTextColor = Color.Black.hashCode()
                     valueTextSize = 9f
                     lineWidth = 2f
-                    // 强调当前日期点
-                    if (todayIndex >= 0) {
-                        val adjustedTodayIndex = reorderedPairs.indexOfFirst { (dateStr, _) -> dateStr == today }
-                        if (adjustedTodayIndex >= 0) {
-                            setCircleColor(Color(0xFFFF5722).hashCode()) // 设置当天日期点的颜色
-                            circleHoleColor = Color(0xFFFF5722).hashCode()
-                            circleRadius = 6f // 设置当天日期点的大小
+                    // 设置圆点颜色和大小
+                    setCircleColor(Color(0xFF1E88E5).hashCode())
+                    circleHoleColor = Color.White.hashCode()
+                    circleRadius = 4f
+
+                    // 如果需要强调最新数据点，使用不同的方法
+                    if (entries.isNotEmpty()) {
+                        // 使用其他方式突出显示最后一个点，例如增加数据点大小
+                        circleRadius = 5f
+
+                        // 设置单独的颜色数组，每个点一个颜色
+                        val colors = ArrayList<Int>()
+                        for (i in entries.indices) {
+                            if (i == entries.size - 1) {
+                                // 最后一个点使用突出颜色
+                                colors.add(Color(0xFFFF5722).hashCode())
+                            } else {
+                                // 其他点使用普通颜色
+                                colors.add(Color(0xFF1E88E5).hashCode())
+                            }
                         }
+                        circleColors = colors
                     }
                 }
                 val lineData = LineData(dataSet)
 
-                // 获取重新排序后的日期标签
-                val formattedDates = reorderedPairs.map { (dateStr, _) -> dateStr }
+                // 获取排序后的日期标签（缩短日期格式，只显示日和月）
+                val formattedDates = sortedDatePairs.map { (dateStr, _) ->
+                    try {
+                        val originalFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                        val date = originalFormat.parse(dateStr)
+                        val newFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
+                        date?.let { newFormat.format(it) } ?: dateStr
+                    } catch (e: Exception) {
+                        dateStr
+                    }
+                }
 
                 AndroidView(
                     factory = { context: Context ->
@@ -347,15 +344,15 @@ fun DailySugarsLineChart(dailySugars: Map<String, Double>) {
                             setTouchEnabled(true)
                             setPinchZoom(true)
 
-                            // 强调当前日期位置
-                            if (todayIndex >= 0) {
-                                val adjustedTodayIndex = reorderedPairs.indexOfFirst { (dateStr, _) -> dateStr == today }
-                                if (adjustedTodayIndex >= 0) {
-                                    highlightValue(adjustedTodayIndex.toFloat(), 0, false)
-                                }
+                            // 确保显示所有数据
+                            setVisibleXRangeMaximum(entries.size.toFloat())
+
+                            // 高亮显示最新的数据点
+                            if (entries.isNotEmpty()) {
+                                highlightValue(entries.size - 1f, 0, false)
                             }
 
-                            this.invalidate()
+                            invalidate()
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(250.dp)

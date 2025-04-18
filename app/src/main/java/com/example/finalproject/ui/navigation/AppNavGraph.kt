@@ -65,10 +65,13 @@ fun AppNavGraph(navController: NavHostController) {
         composable("home") {
             if (userId == null) return@composable
 
+            val weightViewModel: WeightViewModel = hiltViewModel() // 添加WeightViewModel
+
             HomeScreen(
                 userId = userId!!,
                 userInfoViewModel = hiltViewModel(), // ✅ 传递 UserInfoViewModel，获取邮箱
                 viewModel = hiltViewModel(),
+                weightViewModel = weightViewModel, // 添加WeightViewModel参数
                 onNavigateToFoodDetails = { navController.navigate("food_details/$userId") },
                 onNavigateToMoodDetails = { navController.navigate("mood_details/$userId") },
                 onNavigateToWeight = { navController.navigate("weight") },
@@ -204,6 +207,28 @@ fun AppNavGraph(navController: NavHostController) {
                 viewModel = viewModel,
                 userId = userId,
                 onNavigateTo = { route -> navController.navigate(route) { launchSingleTop = true } }
+            )
+        }
+
+        /** PersonalDetailsScreen */
+        composable("personal_details/{userId}", arguments = listOf(navArgument("userId") { type = NavType.StringType })) {
+            val userId = it.arguments?.getString("userId") ?: return@composable
+            val viewModel: UserInfoViewModel = hiltViewModel()
+
+            PersonalDetailsScreen(
+                userId = userId,
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        /** SettingsScreen */
+        composable("settings/{userId}", arguments = listOf(navArgument("userId") { type = NavType.StringType })) {
+            val userId = it.arguments?.getString("userId") ?: return@composable
+
+            SettingsScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

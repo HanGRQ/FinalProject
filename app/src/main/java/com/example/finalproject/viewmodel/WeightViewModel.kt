@@ -31,6 +31,10 @@ class WeightViewModel : ViewModel() {
     private val _bmiResult = MutableStateFlow(0.0)
     val bmiResult: StateFlow<Double> = _bmiResult.asStateFlow()
 
+    // 为HomeScreen添加的体重记录列表状态
+    private val _weightEntries = MutableStateFlow<List<WeightEntry>>(emptyList())
+    val weightEntries: StateFlow<List<WeightEntry>> = _weightEntries.asStateFlow()
+
     fun addWeightEntry(userId: String, date: String, weight: Double) {
         viewModelScope.launch {
             try {
@@ -41,6 +45,7 @@ class WeightViewModel : ViewModel() {
                     .await()
 
                 fetchWeightEntries(userId) // ✅ 确保 fetch 仅获取当前用户数据
+                getWeightEntries(userId) // 同时更新HomeScreen需要的数据
             } catch (e: Exception) {
                 Log.e("WeightViewModel", "Error adding weight entry", e)
             }
@@ -108,6 +113,32 @@ class WeightViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("WeightViewModel", "Error fetching weight entries", e)
+            }
+        }
+    }
+
+    // 专为HomeScreen添加的获取体重记录方法
+    fun getWeightEntries(userId: String) {
+        viewModelScope.launch {
+            try {
+                val result = db.collection("users")
+                    .document(userId)
+                    .collection("weight_entries")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .get()
+                    .await()
+
+                val entries = result.documents.mapNotNull { doc ->
+                    val timestamp = doc.getLong("timestamp") ?: 0L
+                    val weight = doc.getDouble("weight") ?: return@mapNotNull null
+                    val date = doc.getString("date") ?: ""
+                    WeightEntry(date, weight, timestamp)
+                }
+
+                _weightEntries.value = entries
+                Log.d("WeightViewModel", "Got ${entries.size} weight entries for HomeScreen")
+            } catch (e: Exception) {
+                Log.e("WeightViewModel", "Error getting weight entries for HomeScreen", e)
             }
         }
     }

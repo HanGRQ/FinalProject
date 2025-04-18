@@ -11,14 +11,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -31,12 +28,16 @@ import com.example.finalproject.R
 import com.example.finalproject.ui.components.BottomNavigationBar
 import com.example.finalproject.viewmodel.FoodDetailsViewModel
 import com.example.finalproject.viewmodel.UserInfoViewModel
+import com.example.finalproject.viewmodel.WeightViewModel
+import com.example.finalproject.viewmodel.WeightEntry
+import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
     userId: String,
     userInfoViewModel: UserInfoViewModel,
     viewModel: FoodDetailsViewModel,
+    weightViewModel: WeightViewModel,
     onNavigateToFoodDetails: () -> Unit,
     onNavigateToMoodDetails: () -> Unit,
     onNavigateToWeight: () -> Unit,
@@ -46,9 +47,19 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val userEmail by userInfoViewModel.userEmail.collectAsState()
     val profileImageUrl by userInfoViewModel.profileImageUrl.collectAsState()
+    val userPlan by userInfoViewModel.userPlan.collectAsState()
+
+    // 获取体重数据
+    val weightState by weightViewModel.weightState.collectAsState()
+
+    // 计算体重变化消息
+    val weightChangeMessage = remember(weightState.weightEntries, userPlan) {
+        calculateWeightChangeMessage(weightState.weightEntries, userPlan)
+    }
 
     LaunchedEffect(userId) {
-        viewModel.loadAllDietFoods(userId) // ✅ 确保数据加载
+        viewModel.loadAllDietFoods(userId) // 加载饮食数据
+        weightViewModel.fetchWeightEntries(userId) // 加载体重数据
     }
 
     Scaffold(
@@ -102,7 +113,7 @@ fun HomeScreen(
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "You gained 2kg yesterday, keep it up!",
+                            text = weightChangeMessage,
                             fontSize = 14.sp,
                             color = Color.Gray
                         )
@@ -111,13 +122,13 @@ fun HomeScreen(
                 }
             }
 
+            // 其余部分保持不变
             item {
-                // ✅ 显示用户的饮食数据
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF00796B) // ✅ 深青绿色
+                        containerColor = Color(0xFF00796B)
                     ),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
@@ -125,10 +136,9 @@ fun HomeScreen(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // ✅ 显示 Total Energy
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.LocalFireDepartment, // 🔥 代表能量的火焰图标
+                                imageVector = Icons.Default.LocalFireDepartment,
                                 contentDescription = "Total Energy",
                                 tint = Color.White,
                                 modifier = Modifier.size(28.dp)
@@ -144,10 +154,9 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // ✅ 显示 Total Sugars
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.LocalDrink, // 🍬 代表糖分的图标
+                                imageVector = Icons.Default.LocalDrink,
                                 contentDescription = "Total Sugars",
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
@@ -161,7 +170,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "(${(uiState.totalNutrition.totalSugars / 100).toInt()}%)", // ✅ 百分比显示
+                                text = "(${(uiState.totalNutrition.totalSugars / 100).toInt()}%)",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White.copy(alpha = 0.8f)
@@ -172,7 +181,6 @@ fun HomeScreen(
             }
 
             item {
-                // ✅ 食物数据
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -218,7 +226,6 @@ fun HomeScreen(
             }
 
             item {
-                // ✅ 心情状态
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -326,5 +333,46 @@ private fun FoodItem(
                 )
             }
         }
+    }
+}
+
+// 计算并生成体重变化消息
+private fun calculateWeightChangeMessage(weightEntries: List<WeightEntry>, userPlan: String): String {
+    // 如果体重记录少于2条，则无法比较变化
+    if (weightEntries.size < 2) {
+        return when (userPlan) {
+            "Weight Gain" -> "Keep working on gaining weight!"
+            "Weight Loss" -> "Keep working on losing weight!"
+            "Healthy" -> "Keep Healthy!"
+            else -> "Monitor your weight regularly!"
+        }
+    }
+
+    // 获取最新的两条记录
+    val sortedEntries = weightEntries.sortedByDescending { it.timestamp }
+    val latestWeight = sortedEntries[0].weight
+    val previousWeight = sortedEntries[1].weight
+
+    // 计算差值（保留一位小数）
+    val weightDiff = latestWeight - previousWeight
+    val absWeightDiff = String.format("%.1f", abs(weightDiff))
+
+    return when (userPlan) {
+        "Weight Gain" -> {
+            if (weightDiff > 0) {
+                "You gained ${absWeightDiff}kg recently, keep it up!"
+            } else {
+                "Keep working on gaining weight!"
+            }
+        }
+        "Weight Loss" -> {
+            if (weightDiff < 0) {
+                "You lost ${absWeightDiff}kg recently, great job!"
+            } else {
+                "Keep working on losing weight!"
+            }
+        }
+        "Healthy" -> "Keep Healthy!"
+        else -> "Monitor your weight regularly!"
     }
 }

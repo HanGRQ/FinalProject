@@ -8,11 +8,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,6 +64,7 @@ fun WeightScreen(
     var heightInput by remember { mutableStateOf("") }
 
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     val datePickerDialog = remember {
         DatePickerDialog(
@@ -80,6 +84,7 @@ fun WeightScreen(
     // ✅ 加载当前用户的体重数据
     LaunchedEffect(userId) {
         viewModel.fetchWeightEntries(userId)
+        viewModel.fetchBMI(userId)
     }
 
     Scaffold(
@@ -96,10 +101,12 @@ fun WeightScreen(
             )
         }
     ) { innerPadding ->
+        // 使用可滚动的列来包含内容
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             Row(
@@ -266,6 +273,146 @@ fun WeightScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // BMI解释卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                var showBMIInfoDialog by remember { mutableStateOf(false) }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "BMI Interpretation",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 16.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // 根据BMI值显示不同的解释
+                        val (interpretationText, interpretationColor) = when {
+                            bmiResult < 18.5 -> Pair("Underweight", Color(0xFF64B5F6))
+                            bmiResult < 25 -> Pair("Normal weight", Color(0xFF4CAF50))
+                            bmiResult < 30 -> Pair("Overweight", Color(0xFFFFA726))
+                            else -> Pair("Obesity", Color(0xFFE57373))
+                        }
+
+                        Text(
+                            text = interpretationText,
+                            color = interpretationColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { showBMIInfoDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "BMI Info",
+                            tint = Color(0xFF00BFA5)
+                        )
+                    }
+                }
+
+                // BMI信息对话框
+                if (showBMIInfoDialog) {
+                    Dialog(onDismissRequest = { showBMIInfoDialog = false }) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "BMI Categories",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // BMI分类表
+                                Column(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    BMICategoryRow(
+                                        category = "Underweight",
+                                        range = "Below 18.5",
+                                        color = Color(0xFF64B5F6)
+                                    )
+
+                                    BMICategoryRow(
+                                        category = "Normal weight",
+                                        range = "18.5–24.9",
+                                        color = Color(0xFF4CAF50)
+                                    )
+
+                                    BMICategoryRow(
+                                        category = "Overweight",
+                                        range = "25.0–29.9",
+                                        color = Color(0xFFFFA726)
+                                    )
+
+                                    BMICategoryRow(
+                                        category = "Obesity (Class I)",
+                                        range = "30.0–34.9",
+                                        color = Color(0xFFE57373)
+                                    )
+
+                                    BMICategoryRow(
+                                        category = "Obesity (Class II)",
+                                        range = "35.0–39.9",
+                                        color = Color(0xFFEF5350)
+                                    )
+
+                                    BMICategoryRow(
+                                        category = "Extreme Obesity (Class III)",
+                                        range = "40.0 and above",
+                                        color = Color(0xFFD32F2F)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text(
+                                    text = "Note: BMI is a screening tool, but it does not diagnose body fatness or health. A healthcare provider can help you interpret your BMI results.",
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                TextButton(
+                                    onClick = { showBMIInfoDialog = false },
+                                    modifier = Modifier.align(Alignment.End)
+                                ) {
+                                    Text("Close")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 添加底部间距，确保内容不会被底部导航栏挡住
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (showWeightDialog) {
@@ -407,6 +554,38 @@ fun WeightScreen(
 }
 
 @Composable
+fun BMICategoryRow(category: String, range: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Column {
+            Text(
+                text = category,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp
+            )
+
+            Text(
+                text = "BMI: $range",
+                color = Color.Gray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
 fun WeightLineChart(weightEntries: List<WeightEntry>) {
     AndroidView(
         modifier = Modifier
@@ -424,24 +603,91 @@ fun WeightLineChart(weightEntries: List<WeightEntry>) {
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(false)
+                    labelRotationAngle = 30f // 旋转标签以便更好地显示日期
+                    granularity = 1f // 确保每个标签之间的最小间隔
                 }
 
                 axisLeft.setDrawGridLines(true)
                 axisRight.isEnabled = false
+
+                // 设置动画
+                animateX(1000)
             }
         },
         update = { chart ->
-            val entries = weightEntries.mapIndexed { index, entry ->
-                Entry(index.toFloat(), entry.weight.toFloat())
+            // 将日期解析为实际的日期对象，以便正确排序
+            val parsedEntries = weightEntries.map { entry ->
+                val parsedDate = try {
+                    // 尝试解析不同格式的日期
+                    if (entry.date.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                        // yyyy-MM-dd格式
+                        val parts = entry.date.split("-")
+                        val year = parts[0].toInt()
+                        val month = parts[1].toInt() - 1  // 月份从0开始
+                        val day = parts[2].toInt()
+                        val calendar = Calendar.getInstance()
+                        calendar.set(year, month, day)
+                        calendar.timeInMillis
+                    } else if (entry.date.matches(Regex("\\d{2}-\\d{2}-\\d{4}"))) {
+                        // dd-MM-yyyy格式
+                        val parts = entry.date.split("-")
+                        val day = parts[0].toInt()
+                        val month = parts[1].toInt() - 1  // 月份从0开始
+                        val year = parts[2].toInt()
+                        val calendar = Calendar.getInstance()
+                        calendar.set(year, month, day)
+                        calendar.timeInMillis
+                    } else {
+                        // 使用时间戳作为备选排序方式
+                        entry.timestamp
+                    }
+                } catch (e: Exception) {
+                    // 解析失败时使用时间戳
+                    entry.timestamp
+                }
+                Triple(entry.date, entry.weight, parsedDate)
             }
 
-            val dataSet = LineDataSet(entries, "Weight").apply {
-                color = android.graphics.Color.BLUE
-                setCircleColor(android.graphics.Color.BLUE)
+            // 按照日期从过去到现在的顺序排序
+            val sortedEntries = parsedEntries.sortedBy { it.third }
+
+            // 提取排序后的格式化日期和体重
+            val dates = sortedEntries.map { it.first }
+            val weights = sortedEntries.map { it.second }
+
+            // 为图表创建数据点
+            val chartEntries = weights.mapIndexed { index, weight ->
+                Entry(index.toFloat(), weight.toFloat())
+            }
+
+            // 将日期格式化为显示格式
+            val formattedDates = dates.map { dateStr ->
+                try {
+                    // 统一转换为DD-MM-YYYY格式
+                    if (dateStr.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                        // 从yyyy-MM-dd转换为dd-MM-yyyy
+                        val parts = dateStr.split("-")
+                        "${parts[2]}-${parts[1]}-${parts[0]}"
+                    } else {
+                        // 已经是dd-MM-yyyy或其他格式
+                        dateStr
+                    }
+                } catch (e: Exception) {
+                    dateStr
+                }
+            }
+
+            val dataSet = LineDataSet(chartEntries, "Weight").apply {
+                color = android.graphics.Color.rgb(0, 191, 165)  // 主题色 #00BFA5
+                setCircleColor(android.graphics.Color.rgb(0, 191, 165))
                 lineWidth = 2f
                 circleRadius = 4f
                 setDrawValues(true)
+                valueTextSize = 9f
             }
+
+            // 设置X轴日期标签
+            chart.xAxis.valueFormatter = com.github.mikephil.charting.formatter.IndexAxisValueFormatter(formattedDates)
 
             val lineData = LineData(dataSet)
             chart.data = lineData
